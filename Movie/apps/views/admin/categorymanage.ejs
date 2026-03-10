@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partials/head') %>
+</head>
+<body class="font-display bg-background-dark text-slate-200 antialiased selection:bg-primary selection:text-white overflow-hidden h-screen flex">
+    <%- include('partials/sidebar') %>
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background-dark">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-glow opacity-30 pointer-events-none z-0"></div>
+        <%- include('partials/header') %>
+        <div class="flex-1 overflow-y-auto p-8 relative z-10">
+            <!-- Content -->
+            <div class="max-w-[1600px] mx-auto space-y-8">
+                <!-- Header Section -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight text-white">Quản lý thể loại</h2>
+                        <p class="text-gray-400 mt-1">Danh sách và quản lý các thể loại phim.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="openModal()" class="px-6 py-2.5 rounded-full bg-gradient-primary text-white text-sm font-bold shadow-glow-primary hover:shadow-[0_0_25px_rgba(229,9,20,0.5)] hover:scale-105 transition-all active:scale-95 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                            Thêm thể loại
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Table Section -->
+                <div class="rounded-2xl glass-panel border border-white/5 overflow-hidden">
+                    <div class="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h3 class="text-lg font-bold text-white">Danh sách thể loại</h3>
+                        <div class="flex gap-2">
+                            <input class="bg-surface-dark border border-white/10 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-secondary focus:border-secondary w-64 text-white placeholder-gray-500" placeholder="Tìm kiếm thể loại..." type="text"/>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="categoryTable" class="w-full text-left text-sm">
+                            <thead class="bg-white/5 text-gray-400 font-medium uppercase tracking-wider text-xs">
+                                <tr>
+                                    <th class="px-6 py-4">Tên thể loại</th>
+                                    <th class="px-6 py-4">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <!-- Categories will be loaded here via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div id="pagination" class="p-4 border-t border-white/5 flex items-center justify-between">
+                        <!-- Pagination controls will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="categoryModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 rounded-2xl glass-panel border border-white/10 shadow-2xl">
+            <h3 id="modalTitle" class="text-xl font-bold text-white mb-6">Thêm thể loại mới</h3>
+            <form id="categoryForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="mode" value="create">
+                <input type="hidden" id="categoryId" name="Id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Tên thể loại</label>
+                        <input type="text" id="categoryName" name="Name" required class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600" placeholder="Nhập tên thể loại...">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-full bg-surface-dark border border-white/10 text-sm font-medium hover:bg-white/5 transition-colors text-gray-300">Hủy</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-full bg-gradient-primary text-white text-sm font-bold shadow-glow-primary hover:shadow-[0_0_25px_rgba(229,9,20,0.5)] hover:scale-105 transition-all active:scale-95">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let currentPage = 1;
+        const limit = 10;
+
+        $(document).ready(function() {
+            loadCategories();
+        });
+
+        function loadCategories(page = 1) {
+            currentPage = page;
+            $.ajax({
+                url: `/admin/categorymanage/list?page=${page}&limit=${limit}`,
+                type: 'GET',
+                success: function(res) {
+                    const tbody = $('#categoryTable tbody');
+                    tbody.empty();
+                    
+                    const categories = res.data;
+                    
+                    if (categories && categories.length > 0) {
+                        categories.forEach(category => {
+                            const row = `
+                                <tr class="hover:bg-white/5 transition-colors">
+                                    <td class="px-6 py-4 text-white font-medium">${category.Name}</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <button onclick="editCategory('${category._id}', '${category.Name.replace(/'/g, "\\'")}')" class="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors" title="Chỉnh sửa">
+                                                <span class="material-symbols-outlined text-lg">edit</span>
+                                            </button>
+                                            <button onclick="deleteCategory('${category._id}')" class="p-1.5 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors" title="Xóa">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                        
+                        renderPagination(res.totalPages, res.page, res.total);
+                    } else {
+                        tbody.append('<tr><td colspan="2" class="px-6 py-8 text-center text-gray-500">Không có thể loại nào.</td></tr>');
+                        $('#pagination').empty();
+                    }
+                },
+                error: function(err) {
+                    console.error('Lỗi khi tải danh sách thể loại:', err);
+                }
+            });
+        }
+
+        function renderPagination(totalPages, currentPage, totalItems) {
+            const paginationContainer = $('#pagination');
+            paginationContainer.empty();
+            
+            if (totalPages <= 1) return;
+
+            const startItem = (currentPage - 1) * limit + 1;
+            const endItem = Math.min(currentPage * limit, totalItems);
+
+            let paginationHtml = `
+                <div class="text-sm text-gray-400">
+                    Hiển thị <span class="font-medium text-white">${startItem}</span> đến <span class="font-medium text-white">${endItem}</span> trong tổng số <span class="font-medium text-white">${totalItems}</span> thể loại
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="loadCategories(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-3 py-1 rounded-lg bg-surface-dark border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        <span class="material-symbols-outlined text-sm">chevron_left</span>
+                    </button>
+            `;
+
+            // Calculate page range to show
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            if (startPage > 1) {
+                paginationHtml += `
+                    <button onclick="loadCategories(1)" class="px-3 py-1 rounded-lg bg-surface-dark border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all">1</button>
+                    ${startPage > 2 ? '<span class="px-2 py-1 text-gray-600">...</span>' : ''}
+                `;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    paginationHtml += `
+                        <button class="px-3 py-1 rounded-lg bg-primary text-white font-medium shadow-glow-primary transition-all">${i}</button>
+                    `;
+                } else {
+                    paginationHtml += `
+                        <button onclick="loadCategories(${i})" class="px-3 py-1 rounded-lg bg-surface-dark border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all">${i}</button>
+                    `;
+                }
+            }
+
+            if (endPage < totalPages) {
+                paginationHtml += `
+                    ${endPage < totalPages - 1 ? '<span class="px-2 py-1 text-gray-600">...</span>' : ''}
+                    <button onclick="loadCategories(${totalPages})" class="px-3 py-1 rounded-lg bg-surface-dark border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all">${totalPages}</button>
+                `;
+            }
+
+            paginationHtml += `
+                    <button onclick="loadCategories(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-3 py-1 rounded-lg bg-surface-dark border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        <span class="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
+                </div>
+            `;
+
+            paginationContainer.html(paginationHtml);
+        }
+
+        function openModal() {
+            $('#categoryModal').removeClass('hidden');
+            $('#modalTitle').text('Thêm thể loại mới');
+            $('#categoryForm')[0].reset();
+            $('#mode').val('create');
+            $('#categoryId').val('');
+        }
+
+        function closeModal() {
+            $('#categoryModal').addClass('hidden');
+        }
+
+        window.editCategory = function(id, name) {
+            $('#categoryModal').removeClass('hidden');
+            $('#modalTitle').text('Chỉnh sửa thể loại');
+            $('#mode').val('update');
+            $('#categoryId').val(id);
+            $('#categoryName').val(name);
+        }
+
+        window.handleFormSubmit = function(e) {
+            e.preventDefault();
+            const mode = $('#mode').val();
+            const id = $('#categoryId').val();
+            const name = $('#categoryName').val();
+            const url = mode === 'update' ? '/admin/categorymanage/update' : '/admin/categorymanage/create';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: { Id: id, Name: name },
+                success: function(res) {
+                    if (res.status) {
+                        closeModal();
+                        loadCategories();
+                    } else {
+                        alert(res.message);
+                    }
+                },
+                error: function(err) {
+                    console.error('Lỗi khi lưu thể loại:', err);
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            });
+        }
+
+        window.deleteCategory = function(id) {
+            if(confirm('Bạn có chắc chắn muốn xóa thể loại này?')) {
+                $.ajax({
+                    url: `/admin/categorymanage/delete?id=${id}`,
+                    type: 'DELETE',
+                    success: function(res) {
+                        if(res.status) {
+                            loadCategories();
+                        } else {
+                            alert(res.message);
+                        }
+                    },
+                    error: function(err) {
+                        console.error('Lỗi khi xóa thể loại:', err);
+                        alert('Có lỗi xảy ra, vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+/* Fix for Chrome Autofill white background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #0a0a12 inset !important; /* Match background-dark */
+    -webkit-text-fill-color: white !important;
+    caret-color: white;
+}
+
+/* Custom Input Glass Style */
+.input-glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.input-glass:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(229, 9, 20, 0.5); /* Primary color */
+}
+
+/* Ensure placeholder color is correct */
+.input-glass::placeholder {
+    color: #6b7280; /* gray-500 */
+}
+
+.hide-scroll::-webkit-scrollbar {
+    display: none;
+}
+.hide-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.text-glow {
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}

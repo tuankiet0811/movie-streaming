@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partials/head') %>
+</head>
+<body class="font-display bg-background-dark text-slate-200 antialiased selection:bg-primary selection:text-white overflow-hidden h-screen flex">
+    <%- include('partials/sidebar') %>
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background-dark">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-glow opacity-30 pointer-events-none z-0"></div>
+        <%- include('partials/header') %>
+        <div class="flex-1 overflow-y-auto p-8 relative z-10">
+            <!-- Content -->
+            <div class="max-w-[1600px] mx-auto space-y-8">
+                <!-- Overview Section -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight text-white">Tổng quan</h2>
+                        <p class="text-gray-400 mt-1">Hiệu suất nền tảng trong 30 ngày qua.</p>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl hover:border-secondary/30 transition-colors group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-secondary/10 blur-[50px] rounded-full pointer-events-none"></div>
+                        <div class="flex items-start justify-between relative z-10">
+                            <div class="p-3.5 rounded-xl bg-secondary/10 text-secondary group-hover:bg-secondary group-hover:text-black transition-colors shadow-[0_0_15px_rgba(0,229,255,0.1)]">
+                                <span class="material-symbols-outlined">group</span>
+                            </div>
+                            <!-- Trend removed for real data simplicity or can be calculated if history exists -->
+                        </div>
+                        <div class="mt-5 relative z-10">
+                            <p class="text-sm text-gray-400 font-medium">Tổng người dùng</p>
+                            <h3 class="text-2xl font-bold mt-1 text-white"><%= stats.totalUsers.toLocaleString() %></h3>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl hover:border-primary/30 transition-colors group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-primary/10 blur-[50px] rounded-full pointer-events-none"></div>
+                        <div class="flex items-start justify-between relative z-10">
+                            <div class="p-3.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-[0_0_15px_rgba(229,9,20,0.1)]">
+                                <span class="material-symbols-outlined">movie</span>
+                            </div>
+                        </div>
+                        <div class="mt-5 relative z-10">
+                            <p class="text-sm text-gray-400 font-medium">Tổng số phim</p>
+                            <h3 class="text-2xl font-bold mt-1 text-white"><%= stats.totalMovies.toLocaleString() %></h3>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl hover:border-accent-purple/30 transition-colors group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-accent-purple/10 blur-[50px] rounded-full pointer-events-none"></div>
+                        <div class="flex items-start justify-between relative z-10">
+                            <div class="p-3.5 rounded-xl bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white transition-colors shadow-[0_0_15px_rgba(157,0,255,0.1)]">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </div>
+                        </div>
+                        <div class="mt-5 relative z-10">
+                            <p class="text-sm text-gray-400 font-medium">Tổng tương tác</p>
+                            <h3 class="text-2xl font-bold mt-1 text-white"><%= stats.totalViews.toLocaleString() %></h3>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl hover:border-accent-gold/30 transition-colors group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-accent-gold/10 blur-[50px] rounded-full pointer-events-none"></div>
+                        <div class="flex items-start justify-between relative z-10">
+                            <div class="p-3.5 rounded-xl bg-accent-gold/10 text-accent-gold group-hover:bg-accent-gold group-hover:text-black transition-colors shadow-[0_0_15px_rgba(255,215,0,0.1)]">
+                                <span class="material-symbols-outlined">star</span>
+                            </div>
+                        </div>
+                        <div class="mt-5 relative z-10">
+                            <p class="text-sm text-gray-400 font-medium">Đánh giá trung bình</p>
+                            <h3 class="text-2xl font-bold mt-1 text-white"><%= stats.avgRating %>/10</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Lists -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <!-- Chart Section -->
+                    <div class="xl:col-span-2 rounded-2xl glass-panel p-6 border border-white/5">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Xu hướng xem</h3>
+                                <p class="text-sm text-gray-400">Thống kê lượt xem hàng ngày</p>
+                            </div>
+                            <select class="bg-surface-dark border border-white/10 rounded-lg text-sm px-3 py-2 text-gray-300 focus:ring-1 focus:ring-secondary focus:border-secondary transition-colors">
+                                <option>7 ngày qua</option>
+                                <option>30 ngày qua</option>
+                                <option>Năm nay</option>
+                            </select>
+                        </div>
+                        <div class="w-full h-[300px] relative">
+                            <svg class="w-full h-full overflow-visible" viewBox="0 0 1000 300">
+                                <defs>
+                                    <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#E50914" stop-opacity="0.3"></stop>
+                                        <stop offset="100%" stop-color="#E50914" stop-opacity="0"></stop>
+                                    </linearGradient>
+                                    <filter height="140%" id="glow" width="140%" x="-20%" y="-20%">
+                                        <feGaussianBlur result="coloredBlur" stdDeviation="3"></feGaussianBlur>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"></feMergeNode>
+                                            <feMergeNode in="SourceGraphic"></feMergeNode>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <line stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" x1="0" x2="1000" y1="225" y2="225"></line>
+                                <line stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" x1="0" x2="1000" y1="150" y2="150"></line>
+                                <line stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" x1="0" x2="1000" y1="75" y2="75"></line>
+                                <path d="M0,250 C100,240 150,150 200,180 S300,220 400,120 S500,50 600,100 S700,180 800,140 S900,200 1000,80 V300 H0 Z" fill="url(#chartGradient)" stroke="none"></path>
+                                <path d="M0,250 C100,240 150,150 200,180 S300,220 400,120 S500,50 600,100 S700,180 800,140 S900,200 1000,80" fill="none" filter="url(#glow)" stroke="#E50914" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+                            </svg>
+                            <div class="flex justify-between mt-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <span>T2</span>
+                                <span>T3</span>
+                                <span>T4</span>
+                                <span>T5</span>
+                                <span>T6</span>
+                                <span>T7</span>
+                                <span>CN</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Movies Section -->
+                    <div class="rounded-2xl glass-panel p-6 flex flex-col border border-white/5">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-bold text-white">Phim hàng đầu</h3>
+                            <a class="text-xs font-bold text-secondary hover:text-white transition-colors" href="/admin/moviemanage">XEM TẤT CẢ</a>
+                        </div>
+                        <div class="flex flex-col gap-4 flex-1">
+                            <% if (topMovies && topMovies.length > 0) { %>
+                                <% topMovies.forEach(movie => { 
+                                    let posterUrl = movie.poster_path 
+                                        ? (movie.poster_path.startsWith('http') ? movie.poster_path : 'https://image.tmdb.org/t/p/w92' + movie.poster_path)
+                                        : 'https://via.placeholder.com/92x138?text=No+Img';
+                                    let releaseYear = (movie.release_date || movie.first_air_date || '').split('-')[0] || 'N/A';
+                                %>
+                                <div class="flex items-center gap-4 p-3 rounded-xl bg-surface-dark border border-white/5 hover:border-secondary/20 hover:bg-white/5 transition-all cursor-pointer group">
+                                    <div class="w-12 h-16 rounded-lg bg-gray-800 bg-cover bg-center shadow-lg group-hover:scale-105 transition-transform" style="background-image: url('<%= posterUrl %>');"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-bold text-sm text-gray-200 group-hover:text-secondary transition-colors truncate"><%= movie.title || movie.name %></h4>
+                                        <% if (movie.original_title || movie.original_name) { %>
+                                            <p class="text-xs text-accent-gold truncate font-medium"><%= movie.original_title || movie.original_name %></p>
+                                        <% } %>
+                                        <p class="text-[10px] text-gray-500 mt-0.5"><%= releaseYear %></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-sm text-white"><%= Math.round(movie.popularity).toLocaleString() %></p>
+                                        <p class="text-[10px] text-accent-green font-medium text-emerald-400">Điểm phổ biến</p>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <p class="text-gray-400 text-sm text-center">Chưa có dữ liệu phim.</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent User Activity -->
+                <div class="rounded-2xl glass-panel border border-white/5 overflow-hidden">
+                    <div class="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h3 class="text-lg font-bold text-white">Người dùng mới</h3>
+                        <div class="flex gap-2">
+                            <a href="/admin/usermanage" class="text-sm text-secondary hover:text-white transition-colors font-medium">Xem tất cả</a>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-white/5 text-gray-400 font-medium uppercase tracking-wider text-xs">
+                                <tr>
+                                    <th class="px-6 py-4">Người dùng</th>
+                                    <th class="px-6 py-4">Email</th>
+                                    <th class="px-6 py-4">Ngày tham gia</th>
+                                    <th class="px-6 py-4">Trạng thái</th>
+                                    <th class="px-6 py-4 text-right">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <% if (recentUsers && recentUsers.length > 0) { %>
+                                    <% recentUsers.forEach(user => { 
+                                        let joinDate = new Date(parseInt(user._id.toString().substring(0, 8), 16) * 1000).toLocaleDateString('vi-VN');
+                                        let avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`;
+                                    %>
+                                    <tr class="hover:bg-white/5 transition-colors group">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="size-9 rounded-full bg-cover bg-center ring-2 ring-white/5 group-hover:ring-secondary/50 transition-all" style="background-image: url('<%= avatarUrl %>');"></div>
+                                                <div>
+                                                    <p class="font-semibold text-white"><%= user.full_name || user.email.split('@')[0] %></p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-300"><%= user.email %></td>
+                                        <td class="px-6 py-4 text-gray-500"><%= joinDate %></td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                Hoạt động
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button class="text-gray-500 hover:text-white transition-colors"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-400">Chưa có người dùng nào.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<aside id="sidebar" class="w-72 h-full flex flex-col border-r border-border-dark bg-surface-dark transition-all duration-300 relative z-20 group/sidebar">
+    <div class="h-24 flex items-center justify-between px-6 border-b border-border-dark overflow-hidden transition-all duration-300">
+        <div class="flex items-center gap-3 whitespace-nowrap overflow-hidden">
+            <div class="min-w-[40px] size-10 bg-gradient-primary rounded-xl flex items-center justify-center text-white shadow-glow-primary shrink-0">
+                <span class="material-symbols-outlined">movie</span>
+            </div>
+            <div class="flex flex-col logo-text transition-opacity duration-300 opacity-100">
+                <h1 class="text-xl font-bold leading-tight tracking-tight text-white">Stream<span class="text-primary">Admin</span></h1>
+            </div>
+        </div>
+        <button id="sidebar-toggle" class="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 shrink-0">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+    </div>
+
+    <% 
+        const activeClass = "bg-gradient-primary text-white font-medium shadow-glow-primary"; 
+        const inactiveClass = "text-gray-400 hover:bg-white/5 hover:text-white";
+        // Ensure page is defined, default to empty string
+        const currentPage = (typeof page !== 'undefined') ? page : '';
+    %>
+
+    <nav class="flex-1 overflow-y-auto py-8 px-4 space-y-1 overflow-x-hidden">
+        <a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group relative overflow-hidden <%= currentPage === 'dashboard' ? activeClass : inactiveClass %>" href="/admin">
+            <% if (currentPage === 'dashboard') { %>
+            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <% } %>
+            <span class="material-symbols-outlined min-w-[24px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Bảng điều khiển</span>
+        </a>
+
+        <a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group relative overflow-hidden <%= currentPage === 'users' ? activeClass : inactiveClass %>" href="/admin/usermanage">
+            <% if (currentPage === 'users') { %>
+            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <% } %>
+            <span class="material-symbols-outlined min-w-[24px]">group</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Người dùng</span>
+        </a>
+
+        <a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group relative overflow-hidden <%= currentPage === 'movies' ? activeClass : inactiveClass %>" href="/admin/moviemanage">
+            <% if (currentPage === 'movies') { %>
+            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <% } %>
+            <span class="material-symbols-outlined min-w-[24px]">movie_filter</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Phim</span>
+        </a>
+
+        <a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group relative overflow-hidden <%= currentPage === 'categories' ? activeClass : inactiveClass %>" href="/admin/categorymanage">
+            <% if (currentPage === 'categories') { %>
+            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <% } %>
+            <span class="material-symbols-outlined min-w-[24px]">category</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Thể loại</span>
+        </a>
+        
+        <a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group relative overflow-hidden <%= currentPage === 'reviews' ? activeClass : inactiveClass %>" href="/admin/reviewmanage">
+            <% if (currentPage === 'reviews') { %>
+            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <% } %>
+            <span class="material-symbols-outlined min-w-[24px]">rate_review</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Quản lý Đánh giá</span>
+        </a>
+
+        <!-- <a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group relative overflow-hidden <%= currentPage === 'stats' ? activeClass : inactiveClass %>" href="#">
+            <% if (currentPage === 'stats') { %>
+            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <% } %>
+            <span class="material-symbols-outlined min-w-[24px]">bar_chart</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Thống kê</span>
+        </a> -->
+    </nav>
+
+    <div class="p-4 border-t border-border-dark space-y-1 overflow-x-hidden">
+        <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-colors group whitespace-nowrap" href="#">
+            <span class="material-symbols-outlined min-w-[24px] group-hover:rotate-45 transition-transform">settings</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Cài đặt</span>
+        </a>
+        <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-colors whitespace-nowrap" href="/auth/logout">
+            <span class="material-symbols-outlined min-w-[24px]">logout</span>
+            <span class="menu-text whitespace-nowrap transition-opacity duration-300 opacity-100">Đăng xuất</span>
+        </a>
+    </div>
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const toggleIcon = toggleBtn.querySelector('span');
+        const logoText = document.querySelector('.logo-text');
+        const menuTexts = document.querySelectorAll('.menu-text');
+
+        if (!sidebar || !toggleBtn) return;
+
+        // Function to update UI based on collapsed state
+        function updateSidebarUI(collapsed) {
+            if (collapsed) {
+                sidebar.classList.remove('w-72');
+                sidebar.classList.add('w-20');
+                
+                if (logoText) logoText.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+                if (menuTexts) menuTexts.forEach(el => el.classList.add('opacity-0', 'pointer-events-none', 'hidden'));
+                
+                if (toggleIcon) toggleIcon.innerText = 'chevron_right';
+            } else {
+                sidebar.classList.remove('w-20');
+                sidebar.classList.add('w-72');
+                
+                if (logoText) logoText.classList.remove('opacity-0', 'pointer-events-none', 'hidden');
+                if (menuTexts) menuTexts.forEach(el => el.classList.remove('opacity-0', 'pointer-events-none', 'hidden'));
+                
+                if (toggleIcon) toggleIcon.innerText = 'chevron_left';
+            }
+        }
+
+        // Load state from localStorage
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        updateSidebarUI(isCollapsed);
+
+        // Toggle Event
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent any default button behavior
+            const isCurrentlyCollapsed = sidebar.classList.contains('w-20');
+            const newState = !isCurrentlyCollapsed;
+            
+            updateSidebarUI(newState);
+            localStorage.setItem('sidebarCollapsed', newState);
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+
+<head>
+    <%- include('partical/header'); %>
+    <title><%= (movie && (movie.title || movie.name)) || 'Chi tiết phim' %> - Chi tiết phim</title>
+</head>
+
+<body
+    class="bg-brand-dark text-gray-200 font-display min-h-screen selection:bg-brand-red selection:text-white overflow-x-hidden">
+   <%- include('partical/menu'); %>
+    <div class="relative w-full pt-20 overflow-hidden">
+        <% 
+            const displayTitle = movie && (movie.title || movie.name) || '';
+            const backdrop = movie && movie.backdrop_path 
+                ? (String(movie.backdrop_path).startsWith('http') 
+                    ? movie.backdrop_path 
+                    : ('https://image.tmdb.org/t/p/original' + movie.backdrop_path)) 
+                : 'https://via.placeholder.com/1280x720?text=No+Backdrop';
+        %>
+        <div
+            class="absolute top-0 left-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-[128px] pointer-events-none">
+        </div>
+        <div class="absolute top-20 right-1/4 w-96 h-96 bg-brand-red/10 rounded-full blur-[128px] pointer-events-none">
+        </div>
+        <div class="relative z-10">
+            <div class="relative max-w-7xl mx-auto px-6 py-12 lg:py-24 grid lg:grid-cols-12 gap-12 items-end bg-no-repeat bg-cover bg-right"
+                 style="background-image: url('<%= backdrop %>');">
+                <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/70 to-transparent z-0"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/85 via-brand-dark/40 to-transparent z-0"></div>
+                <div class="absolute bottom-0 w-full h-24 bg-gradient-to-b from-transparent to-brand-dark z-0"></div>
+            <div class="hidden lg:block lg:col-span-3 lg:col-start-1 group perspective-1000 relative z-10">
+                <div
+                    class="rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 relative transform transition-all duration-500 group-hover:rotate-y-6 group-hover:scale-105 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    </div>
+                    <% 
+                        const posterUrl = movie && movie.poster_path 
+                            ? (String(movie.poster_path).startsWith('http') 
+                                ? movie.poster_path 
+                                : ('https://image.tmdb.org/t/p/w500' + movie.poster_path)) 
+                            : 'https://via.placeholder.com/300x450?text=No+Poster';
+                    %>
+                    <img alt="<%= displayTitle %> poster"
+                        class="w-full h-auto object-cover aspect-[2/3]"
+                        src="<%= posterUrl %>" />
+                </div>
+            </div>
+            <div class="col-span-12 lg:col-span-9 flex flex-col gap-6 relative z-10">
+                <div class="flex flex-wrap gap-3">
+                    <span class="px-3 py-1 rounded-md text-xs font-bold bg-gradient-to-r from-brand-red to-red-700 text-white shadow-glow-red tracking-wider">4K ULTRA HD</span>
+                    <% 
+                        const year = movie && movie.release_date ? String(movie.release_date).slice(0,4) : (movie && movie.first_air_date ? String(movie.first_air_date).slice(0,4) : '');
+                        const genreNames = [];
+                        if (movie && movie.genres && Array.isArray(movie.genres)) {
+                            movie.genres.forEach(function(g){ genreNames.push(g.name || g.Name); });
+                        } else if (movie && movie.genre_ids && Array.isArray(movie.genre_ids) && Array.isArray(allGenres)) {
+                            movie.genre_ids.forEach(function(gid){
+                                var match = allGenres.find(function(g){
+                                    return String(g._id) === String(gid) || String(g.id) === String(gid);
+                                });
+                                if (match) genreNames.push(match.Name || match.name);
+                            });
+                        }
+                    %>
+                    <% genreNames.forEach(function(gn){ %>
+                        <span class="px-3 py-1 rounded-md text-xs font-semibold glass-panel text-gray-300 hover:text-white hover:border-accent-blue/50 transition-colors cursor-pointer"><%= gn %></span>
+                    <% }) %>
+                    <% if (year) { %>
+                        <span class="px-3 py-1 rounded-md text-xs font-semibold glass-panel text-gray-300 hover:text-white hover:border-accent-blue/50 transition-colors cursor-pointer"><%= year %></span>
+                    <% } %>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold leading-tight text-white text-glow tracking-tight">
+                    <%= displayTitle %>
+                </h1>
+                <div class="flex flex-wrap items-center gap-6 text-sm md:text-base font-medium text-gray-400">
+                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-full glass-panel border-accent-gold/20">
+                        <span class="material-icons-round text-accent-gold text-lg">star</span>
+                        <span id="avg-rating" class="text-white font-bold text-lg"><% 
+                            var userAvg = (typeof ratingStats !== 'undefined' && ratingStats && ratingStats.count > 0) ? Number(ratingStats.average) : null;
+                            var tmdbAvg = (movie && movie.vote_average) ? Number(movie.vote_average) : null;
+                            var combined = null;
+                            if (userAvg != null && tmdbAvg != null) combined = (userAvg + tmdbAvg) / 2;
+                            else if (userAvg != null) combined = userAvg;
+                            else if (tmdbAvg != null) combined = tmdbAvg;
+                        %><%= combined != null ? combined.toFixed(1) : 'N/A' %></span>
+                        <span id="tmdb-base-avg" data-value="<%= (movie && movie.vote_average) ? Number(movie.vote_average) : '' %>" class="hidden"></span>
+                        <span id="avg-source" class="text-xs text-gray-500 ml-1"><%= (typeof ratingStats !== 'undefined' && ratingStats && ratingStats.count > 0) ? 'Theo người dùng' : 'IMDb' %></span>
+                        <% if (typeof ratingStats !== 'undefined' && ratingStats && ratingStats.count > 0) { %>
+                        <span id="rating-count" class="text-xs text-gray-500 ml-2">(<%= ratingStats.count %> lượt)</span>
+                        <% } %>
+                    </div>
+                    <% if (movie && movie.runtime) { %>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span class="flex items-center gap-2"><span
+                            class="material-icons-round text-gray-500 text-sm">schedule</span> <%= movie.runtime %> phút</span>
+                    <% } %>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span class="border border-gray-600 px-2 rounded text-xs"><%= (movie && movie.adult) ? '18+' : 'PG-13' %></span>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span class="text-accent-blue drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]"><%= (movie && movie.popularity > 100) ? 'Đang thịnh hành' : 'Phổ biến' %></span>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-4 mt-6">
+                    <a href="/movie/watch?id=<%= movie._id %>"
+                        class="group relative px-8 py-4 bg-gradient-to-r from-brand-red to-red-800 text-white font-bold rounded-xl overflow-hidden shadow-glow-red transition-all hover:scale-105 active:scale-95 block">
+                        <div
+                            class="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -translate-x-full">
+                        </div>
+                        <span class="relative flex items-center gap-3">
+                            <span class="material-icons-round text-2xl">play_arrow</span>
+                            Xem ngay
+                        </span>
+                    </a>
+                    <a href="/movie/watch?id=<%= movie._id %>&trailer=true"
+                        class="group px-6 py-4 glass-panel text-white font-semibold rounded-xl hover:bg-white/10 hover:border-white/30 transition-all border border-white/10 flex items-center gap-2 cursor-pointer">
+                            <span class="material-icons-round group-hover:text-accent-blue transition-colors">videocam</span>
+                            Xem trailer
+                    </a>
+                    <button id="btn-favorite" onclick="toggleFavorite('<%= movie._id %>')"
+                        class="p-4 glass-panel text-white rounded-xl hover:bg-white/10 hover:border-brand-red/50 hover:text-brand-red transition-all group">
+                        <span class="material-icons-round <%= (typeof isFavorite !== 'undefined' && isFavorite) ? 'text-brand-red' : '' %>">
+                            <%= (typeof isFavorite !== 'undefined' && isFavorite) ? 'favorite' : 'favorite_border' %>
+                        </span>
+                    </button>
+                    <button
+                        class="p-4 glass-panel text-white rounded-xl hover:bg-white/10 hover:border-accent-blue/50 hover:text-accent-blue transition-all">
+                        <span class="material-icons-round">share</span>
+                    </button>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto px-6 mt-8 mb-24 relative z-10">
+        <div class="border-b border-white/10 mb-8 relative">
+            <div class="flex gap-8 overflow-x-auto hide-scroll">
+                <button id="btn-overview" onclick="switchTab('overview')" 
+                    class="tab-btn pb-4 text-lg font-semibold border-b-2 border-brand-red text-white">
+                    Tổng quan
+                </button>
+                <button id="btn-episodes" onclick="switchTab('episodes')"
+                    class="tab-btn pb-4 text-lg font-medium text-gray-500 hover:text-white transition-colors relative group">
+                    Tập phim
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full"></span>
+                </button>
+                <button id="btn-actors" onclick="switchTab('actors')"
+                    class="tab-btn pb-4 text-lg font-medium text-gray-500 hover:text-white transition-colors relative group">
+                    Diễn viên &amp; Tổ sản xuất
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full"></span>
+                </button>
+
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-8 min-h-[500px]">
+                <!-- Overview Tab -->
+                <div id="tab-overview" class="tab-content flex flex-col gap-12">
+                    <section>
+                        <h3 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+                            <span class="w-1 h-6 bg-brand-red rounded-full"></span>
+                            Tổng quan
+                        </h3>
+                        <div class="glass-panel p-6 rounded-2xl border-white/5">
+                            <p class="text-gray-400 leading-loose text-lg">
+                                <%= (movie && movie.overview) || 'Chưa có mô tả.' %>
+                            </p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Episodes Tab -->
+                <div id="tab-episodes" class="tab-content hidden">
+                    <section>
+                        <h3 class="text-2xl font-bold mb-6 text-white flex items-center gap-2">
+                            <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+                            Danh sách tập phim
+                        </h3>
+                        <% if (movie && movie.media_type === 'tv' && typeof seasons !== 'undefined' && seasons.length > 0) { %>
+                            <div class="mb-6">
+                                <div class="relative inline-block">
+                                    <select id="season-select" onchange="changeSeason(this.value)" class="appearance-none bg-brand-surface border border-white/10 text-white rounded-lg px-6 py-3 pr-12 font-bold cursor-pointer hover:border-brand-red transition-colors focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                        <% seasons.sort((a,b) => a.season_number - b.season_number).forEach((season, index) => { %>
+                                            <option value="<%= season.season_number %>">Phần <%= season.season_number %></option>
+                                        <% }); %>
+                                    </select>
+                                    <span class="material-icons-round absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                            </div>
+
+                            <% seasons.forEach((season, index) => { %>
+                                <div id="season-<%= season.season_number %>" class="season-content <%= index === 0 ? '' : 'hidden' %>">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                        <% if (season.episodes && season.episodes.length > 0) { %>
+                                            <% season.episodes.sort((a,b) => a.episode_number - b.episode_number).forEach(episode => { %>
+                                                <a href="/movie/watch?id=<%= movie._id %>&season=<%= season.season_number %>&episode=<%= episode.episode_number %>" 
+                                                   class="flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all hover:scale-105 group">
+                                                    <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white group-hover:bg-brand-red transition-colors">
+                                                        <%= episode.episode_number %>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium text-gray-300 group-hover:text-white truncate">
+                                                            <%= episode.name || 'Tập ' + episode.episode_number %>
+                                                        </p>
+                                                    </div>
+                                                    <span class="material-icons-round text-gray-500 group-hover:text-white text-lg">play_circle</span>
+                                                </a>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <p class="text-gray-400 col-span-full italic">Chưa có thông tin tập phim.</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="glass-panel p-8 rounded-2xl border-white/5 text-center">
+                                <span class="material-icons-round text-4xl text-gray-600 mb-2">movie_filter</span>
+                                <p class="text-gray-400">Phim này không có danh sách tập phim.</p>
+                            </div>
+                        <% } %>
+                    </section>
+                </div>
+
+                <!-- Actors Tab -->
+                <div id="tab-actors" class="tab-content hidden">
+                    <section>
+                        <div class="flex justify-between items-end mb-6">
+                            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                                <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+                                Danh sách diễn viên
+                            </h3>
+                             <% if (movie && movie.acting && movie.acting.length > 0) { %>
+                                <a class="text-sm font-semibold text-accent-blue hover:text-white transition-colors flex items-center gap-1 cursor-pointer" onclick="openActorsModal()">
+                                    Xem tất cả <span class="material-icons-round text-base">arrow_forward</span>
+                                </a>
+                            <% } %>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                             <% if (movie && movie.acting && movie.acting.length > 0) { %>
+                                <% movie.acting.forEach(function(actor) { %>
+                                    <% 
+                                        const profileUrl = actor.profile_path 
+                                            ? (String(actor.profile_path).startsWith('http') 
+                                                ? actor.profile_path 
+                                                : ('https://image.tmdb.org/t/p/w185' + actor.profile_path)) 
+                                            : 'https://via.placeholder.com/150x150?text=No+Img';
+                                    %>
+                                    <div class="flex flex-col items-center gap-3 group cursor-pointer bg-white/5 p-4 rounded-xl border border-white/5 hover:border-brand-red/50 transition-all">
+                                        <div class="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-brand-red to-purple-600">
+                                            <img alt="<%= actor.name %>"
+                                                class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                                                src="<%= profileUrl %>" 
+                                                onerror="this.src='https://via.placeholder.com/150x150?text=No+Img'" />
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="font-bold text-sm text-white group-hover:text-brand-red transition-colors">
+                                                <%= actor.name %>
+                                            </p>
+                                            <p class="text-xs text-gray-500"><%= actor.character || 'Actor' %></p>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-gray-400 italic pl-2 col-span-full">Đang cập nhật danh sách diễn viên...</div>
+                            <% } %>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Reviews Section -->
+                <div class="mt-12 border-t border-white/10 pt-12">
+                    <section>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <span class="w-1 h-6 bg-accent-purple rounded-full"></span>
+                            Đánh giá
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-500">Sắp xếp theo:</span>
+                            <div class="relative">
+                                <select id="reviews-sort"
+                                    class="appearance-none bg-brand-surface border border-white/10 rounded-lg pl-3 pr-8 py-1 text-sm font-bold text-white focus:ring-1 focus:ring-accent-purple cursor-pointer">
+                                    <option value="high">Được đánh giá cao</option>
+                                    <option value="newest">Mới nhất</option>
+                                </select>
+                                <span
+                                    class="material-icons-round absolute right-2 top-1.5 text-gray-400 text-sm pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-panel rounded-2xl p-6 mb-8 border-white/5">
+                        <div class="flex gap-4">
+                            <% if (typeof user !== 'undefined' && user) { %>
+                                <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold text-white ring-2 ring-white/10 shadow-lg shrink-0">
+                                    <%= (user.email && user.email.charAt(0).toUpperCase()) || 'U' %>
+                                </div>
+                            <% } else { %>
+                                <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+                                    <span class="material-icons-round text-gray-500 text-2xl">person</span>
+                                </div>
+                            <% } %>
+                            <div class="flex-1">
+                                <% if (user) { %>
+                                <% if (!(typeof userRating !== 'undefined' && userRating)) { %>
+                                    <div class="flex items-center gap-3 mb-2" id="rating-control" data-movie-id="<%= movie._id %>">
+                                        <span class="text-sm text-gray-500">Đánh giá phim (1–10):</span>
+                                        <input id="rating-range" type="range" min="1" max="10" step="1" value="<%= (typeof userRating !== 'undefined' && userRating) ? userRating : 5 %>" class="w-48 accent-brand-red">
+                                        <span id="rating-value" class="text-sm font-bold text-white"><%= (typeof userRating !== 'undefined' && userRating) ? userRating : 5 %></span>
+                                        <span id="your-rating-label" class="ml-2 text-xs text-gray-500">Chưa đánh giá</span>
+                                    </div>
+                                <% } else { %>
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <span class="text-sm text-gray-500" id="your-rating-label">Bạn đã đánh giá: <%= userRating %>/10</span>
+                                    </div>
+                                <% } %>
+                                <% } else { %>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-sm text-gray-500">Đăng nhập để đánh giá</span>
+                                    <a href="/auth/login" class="text-sm text-brand-red hover:underline">Đăng nhập</a>
+                                </div>
+                                <% } %>
+                                <% if (!(typeof userRating !== 'undefined' && userRating)) { %>
+                                    <textarea
+                                        class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-accent-purple focus:border-accent-purple outline-none resize-none transition-all"
+                                        id="rating-comment"
+                                        placeholder="Chia sẻ cảm nhận của bạn..." rows="3" required></textarea>
+                                    <div class="flex justify-end mt-3">
+                                        <button
+                                            id="submit-rating"
+                                            class="px-6 py-2 bg-white text-black font-bold rounded-full text-sm hover:bg-gray-200 transition-colors shadow-lg shadow-white/10">
+                                            Đăng đánh giá
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="reviews-list" class="flex flex-col gap-6">
+                        <% if (typeof ratings !== 'undefined' && ratings && ratings.length > 0) { %>
+                        <% const currentUserEmail = user ? user.email : null; %>
+                        <% ratings.forEach(function(r) { %>
+                        <% 
+                            const likes = r.likes || [];
+                            const replies = r.replies || [];
+                            var isLiked = false;
+                            if (currentUserEmail && likes.includes(currentUserEmail)) {
+                                isLiked = true;
+                            }
+                        %>
+                        <div class="review-item border-b border-white/5 pb-6" data-user-email="<%= r.userEmail %>" data-rating="<%= r.rating %>" data-updated="<%= (r.updatedAt ? new Date(r.updatedAt).getTime() : (r.createdAt ? new Date(r.createdAt).getTime() : Date.now())) %>">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white ring-2 ring-white/10">
+                                        <%= (r.userEmail && r.userEmail.charAt(0).toUpperCase()) || 'U' %>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-white text-sm"><%= r.userEmail || 'Người dùng' %></p>
+                                        <p class="text-xs text-gray-500"><%= (r.updatedAt ? new Date(r.updatedAt).toLocaleString('vi-VN') : '') %></p>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-accent-gold font-bold">
+                                    <span><%= r.rating %>/10</span>
+                                </div>
+                            </div>
+                            <% if (r.comment && r.comment.trim() !== '') { %>
+                            <div id="review-content-<%= r.userEmail %>">
+                                <p class="text-gray-400 text-sm leading-relaxed pl-14 mb-3"><%= r.comment %></p>
+                            </div>
+                            <% if (currentUserEmail && currentUserEmail === r.userEmail) { %>
+                                <div id="review-edit-form-<%= r.userEmail %>" class="hidden pl-14 mb-3">
+                                    <textarea class="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white mb-2 outline-none focus:border-accent-blue transition-colors" rows="3"><%= r.comment %></textarea>
+                                    <div class="flex gap-2 justify-end">
+                                        <button class="px-3 py-1 bg-white/10 text-white text-xs rounded hover:bg-white/20 transition-colors" onclick="toggleEditReview('<%= r.userEmail %>')">Hủy</button>
+                                        <button class="px-3 py-1 bg-accent-blue text-white text-xs rounded hover:bg-blue-600 transition-colors font-bold" 
+                                            data-email="<%= r.userEmail %>" 
+                                            data-rating="<%= r.rating || 0 %>"
+                                            data-movie-id="<%= movie._id %>"
+                                            onclick="submitEditReview(this.getAttribute('data-movie-id'), this.getAttribute('data-email'), this.getAttribute('data-rating'), this)">Lưu</button>
+                                    </div>
+                                </div>
+                            <% } %>
+                            <% } %>
+
+                            <div class="flex flex-col gap-3 pl-14">
+                                <div class="flex items-center gap-4">
+                                    <button 
+                                        class="flex items-center gap-1 text-xs transition-colors group <%= isLiked ? 'text-accent-blue' : 'text-gray-500 hover:text-white' %>"
+                                        onclick="toggleLike('<%= movie._id %>', '<%= r.userEmail %>', this)">
+                                        <span class="material-icons-round text-sm group-hover:text-accent-blue">thumb_up</span>
+                                        <span>Thích (<span class="like-count"><%= likes.length %></span>)</span>
+                                    </button>
+                                    <button 
+                                        id="reply-btn-<%= r.userEmail %>"
+                                        class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors group"
+                                        onclick="toggleReplyForm('<%= r.userEmail %>')">
+                                        <span class="material-icons-round text-sm group-hover:text-accent-blue">reply</span>
+                                        <span>Trả lời (<span class="reply-count"><%= replies.length %></span>)</span>
+                                    </button>
+                                    <% if (currentUserEmail && currentUserEmail === r.userEmail) { %>
+                                    <button 
+                                        class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors group"
+                                        onclick="toggleEditReview('<%= r.userEmail %>')">
+                                        <span class="material-icons-round text-sm group-hover:text-accent-blue">edit</span>
+                                        <span>Sửa</span>
+                                    </button>
+                                    <% } %>
+                                </div>
+
+                                <!-- Reply Form -->
+                                <div id="reply-form-<%= r.userEmail %>" class="hidden mt-2">
+                                    <div class="flex gap-3">
+                                        <input type="text" 
+                                            class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-accent-blue outline-none"
+                                            placeholder="Viết câu trả lời..."
+                                            onkeydown="if(event.key==='Enter') submitReply('<%= movie._id %>', '<%= r.userEmail %>', this)">
+                                        <button class="text-accent-blue text-sm font-bold hover:text-white" onclick="submitReply('<%= movie._id %>', '<%= r.userEmail %>', this.previousElementSibling)">Gửi</button>
+                                    </div>
+                                </div>
+
+                                <!-- Replies List -->
+                                <% if (replies.length > 0) { %>
+                                <div class="mt-2 pl-4">
+                                    <button id="toggle-replies-btn-<%= r.userEmail %>" 
+                                        class="text-xs text-accent-blue hover:text-white transition-colors font-medium flex items-center gap-1"
+                                        onclick="toggleRepliesList('<%= r.userEmail %>')">
+                                        <span>Hiển thị các câu trả lời</span>
+                                        <span class="material-icons-round text-sm">expand_more</span>
+                                    </button>
+                                </div>
+                                <% } %>
+
+                                <div id="replies-list-<%= r.userEmail %>" class="hidden flex flex-col gap-2 mt-2 pl-4 border-l border-white/10">
+                                    <% replies.forEach(function(rep) { 
+                                        const repLikes = rep.likes || [];
+                                        const isRepLiked = currentUserEmail && repLikes.includes(currentUserEmail);
+                                        const repId = rep._id; // Ensure existing ones have it or handle graceful degradation
+                                    %>
+                                    <div class="bg-white/5 rounded-lg p-3 text-sm">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="font-bold text-white text-xs"><%= rep.userEmail %></span>
+                                            <span class="text-[10px] text-gray-500"><%= new Date(rep.createdAt).toLocaleString('vi-VN') %></span>
+                                        </div>
+                                        <div id="reply-content-<%= repId %>">
+                                            <% 
+                                                let formattedContent = (rep.content || '')
+                                                    .replace(/</g, '&lt;')
+                                                    .replace(/>/g, '&gt;')
+                                                    .replace(/(@\S+)/g, '<span class="text-accent-blue font-semibold">$1</span>');
+                                            %>
+                                            <p class="text-gray-300 mb-2"><%- formattedContent %></p>
+                                        </div>
+                                        <% if (currentUserEmail && currentUserEmail === rep.userEmail) { %>
+                                            <div id="reply-edit-form-<%= repId %>" class="hidden mb-2">
+                                                <textarea class="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white mb-2 outline-none focus:border-accent-blue transition-colors" rows="2"><%= rep.content %></textarea>
+                                                <div class="flex gap-2 justify-end">
+                                                    <button class="px-2 py-1 bg-white/10 text-white text-[10px] rounded hover:bg-white/20 transition-colors" onclick="toggleEditReply('<%= repId %>')">Hủy</button>
+                                                    <button class="px-2 py-1 bg-accent-blue text-white text-[10px] rounded hover:bg-blue-600 transition-colors font-bold" 
+                                                        data-email="<%= r.userEmail %>"
+                                                        data-reply-id="<%= repId %>"
+                                                        data-movie-id="<%= movie._id %>"
+                                                        onclick="submitEditReply(this.getAttribute('data-movie-id'), this.getAttribute('data-email'), this.getAttribute('data-reply-id'), this)">Lưu</button>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                        
+                                        <% if (repId) { %>
+                                        <div class="flex items-center gap-3">
+                                            <button 
+                                                class="flex items-center gap-1 text-[10px] transition-colors group <%= isRepLiked ? 'text-accent-blue' : 'text-gray-500 hover:text-white' %>"
+                                                onclick="toggleLikeReply('<%= movie._id %>', '<%= r.userEmail %>', '<%= repId %>', this)">
+                                                <span class="font-bold hover:underline cursor-pointer">Thích</span>
+                                                <span class="like-count"><%= repLikes.length > 0 ? '(' + repLikes.length + ')' : '' %></span>
+                                            </button>
+                                            <button 
+                                                class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-white transition-colors group"
+                                                onclick="replyToUser('<%= r.userEmail %>', '<%= rep.userEmail %>')">
+                                                <span class="font-bold hover:underline cursor-pointer">Trả lời</span>
+                                            </button>
+                                            <% if (currentUserEmail && currentUserEmail === rep.userEmail && (new Date() - new Date(rep.createdAt || 0) < 24 * 60 * 60 * 1000)) { %>
+                                            <button 
+                                                class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-white transition-colors group"
+                                                onclick="toggleEditReply('<%= repId %>')">
+                                                <span class="font-bold hover:underline cursor-pointer">Sửa</span>
+                                            </button>
+                                            <% } %>
+                                        </div>
+                                        <% } %>
+                                    </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                        <% } else { %>
+                        <div id="no-reviews-msg" class="text-gray-500 text-sm">Chưa có đánh giá.</div>
+                        <% } %>
+                    </div>
+                </section>
+                </div>
+            </div>
+            <div class="lg:col-span-4 flex flex-col gap-8">
+                <div class="glass-panel p-6 rounded-2xl border-white/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-brand-red/10 blur-[50px] pointer-events-none"></div>
+                    <h4 class="font-bold text-white mb-6 border-b border-white/10 pb-2">Thông tin phim</h4>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Đạo diễn</span>
+                            <span
+                                class="font-medium text-white hover:text-accent-blue transition-colors cursor-pointer text-right">
+                                <% if (movie && movie.directing && movie.directing.length > 0) { %>
+                                    <%= movie.directing.slice(0, 3).map(d => d.name).join(', ') %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Biên kịch</span>
+                            <span
+                                class="font-medium text-white text-right hover:text-accent-blue transition-colors cursor-pointer">
+                                <% if (movie && movie.writing && movie.writing.length > 0) { %>
+                                    <%= movie.writing.slice(0, 3).map(w => w.name).join(', ') %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Ngày phát hành</span>
+                            <span class="font-medium text-white">
+                                <%= (movie && movie.release_date) || (movie && movie.first_air_date) || 'N/A' %>
+                            </span>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="material-icons-round text-accent-blue">recommend</span>
+                        Tương tự
+                    </h4>
+                    <div class="flex flex-col gap-4">
+                        <% if (typeof similarMovies !== 'undefined' && similarMovies.length > 0) { %>
+                            <% similarMovies.forEach(function(simMovie) { %>
+                                <a href="/movie/detail?id=<%= simMovie._id %>"
+                                    class="flex gap-4 group cursor-pointer bg-white/5 p-2 rounded-xl hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+                                    <div class="w-24 h-16 rounded-lg overflow-hidden relative shadow-lg flex-shrink-0">
+                                        <% 
+                                            const posterUrl = simMovie.poster_path 
+                                                ? (simMovie.poster_path.startsWith('http') ? simMovie.poster_path : 'https://image.tmdb.org/t/p/w154' + simMovie.poster_path)
+                                                : 'https://via.placeholder.com/92x138?text=No+Image';
+                                        %>
+                                        <img alt="<%= simMovie.title || simMovie.name %>"
+                                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            src="<%= posterUrl %>" />
+                                    </div>
+                                    <div class="flex-1 flex flex-col justify-center min-w-0">
+                                        <h5 class="font-bold text-white text-sm group-hover:text-accent-blue transition-colors truncate">
+                                            <%= simMovie.title || simMovie.name %>
+                                        </h5>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-xs text-gray-500"><%= (simMovie.release_date || simMovie.first_air_date || '').substring(0, 4) %></span>
+                                            <span
+                                                class="text-[10px] px-1.5 py-0.5 bg-brand-surface border border-white/10 rounded text-gray-400 truncate max-w-[100px]">
+                                                <%= simMovie.genres && simMovie.genres.length > 0 ? simMovie.genres[0].name : (simMovie.media_type === 'tv' ? 'TV Show' : 'Movie') %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-gray-500 text-sm">Đang cập nhật...</div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <%- include('partical/footer'); %>
+
+    <!-- Actors Modal -->
+    <div id="actorsModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-black/90 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeActorsModal()"></div>
+
+            <!-- Modal panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-brand-dark rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full border border-white/10 relative">
+                
+                <!-- Header -->
+                <div class="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+                        Danh sách diễn viên
+                    </h3>
+                    <button type="button" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full" onclick="closeActorsModal()">
+                        <span class="material-icons-round text-2xl">close</span>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="px-6 py-8 max-h-[70vh] overflow-y-auto custom-scrollbar bg-brand-dark">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-8 gap-x-6">
+                        <% if (movie && movie.acting && movie.acting.length > 0) { %>
+                            <% movie.acting.forEach(function(actor) { %>
+                                <% 
+                                    const profileUrl = actor.profile_path 
+                                        ? (String(actor.profile_path).startsWith('http') 
+                                            ? actor.profile_path 
+                                            : ('https://image.tmdb.org/t/p/w185' + actor.profile_path)) 
+                                        : 'https://via.placeholder.com/150x150?text=No+Img';
+                                %>
+                                <div class="flex flex-col items-center gap-4 group">
+                                    <div class="relative w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-brand-red to-purple-600 shadow-lg group-hover:shadow-brand-red/50 transition-all duration-300">
+                                        <img alt="<%= actor.name %>"
+                                            class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                                            src="<%= profileUrl %>" 
+                                            onerror="this.src='https://via.placeholder.com/150x150?text=No+Img'" />
+                                    </div>
+                                    <div class="text-center w-full">
+                                        <p class="font-bold text-base text-white group-hover:text-brand-red transition-colors truncate px-2">
+                                            <%= actor.name %>
+                                        </p>
+                                        <p class="text-sm text-gray-500 truncate px-2"><%= actor.character || 'Actor' %></p>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="col-span-full text-center py-12">
+                                <span class="material-icons-round text-6xl text-gray-600 mb-4">person_off</span>
+                                <p class="text-gray-400 text-lg">Chưa có thông tin diễn viên.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleEditReview(userEmail) {
+            const contentDiv = document.getElementById('review-content-' + userEmail);
+            const formDiv = document.getElementById('review-edit-form-' + userEmail);
+            if (contentDiv && formDiv) {
+                contentDiv.classList.toggle('hidden');
+                formDiv.classList.toggle('hidden');
+            }
+        }
+
+        function submitEditReview(movieId, userEmail, currentRating, btn) {
+            const formDiv = document.getElementById('review-edit-form-' + userEmail);
+            const textarea = formDiv.querySelector('textarea');
+            const content = textarea.value.trim();
+            
+            // Disable button
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            fetch('/movie/review/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movieId: movieId, rating: Number(currentRating), comment: content })
+            })
+            .then(r => r.json())
+            .then(resp => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+
+                if (resp.status) {
+                    // Update UI
+                    const contentDiv = document.getElementById('review-content-' + userEmail);
+                    const p = contentDiv.querySelector('p');
+                    if (p) p.textContent = content;
+                    
+                    toggleEditReview(userEmail);
+                } else {
+                    alert(resp.message || 'Có lỗi xảy ra');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = originalText;
+                alert('Có lỗi xảy ra');
+            });
+        }
+
+        function toggleEditReply(replyId) {
+            const contentDiv = document.getElementById('reply-content-' + replyId);
+            const formDiv = document.getElementById('reply-edit-form-' + replyId);
+            if (contentDiv && formDiv) {
+                contentDiv.classList.toggle('hidden');
+                formDiv.classList.toggle('hidden');
+            }
+        }
+
+        function submitEditReply(movieId, reviewUserEmail, replyId, btn) {
+            const formDiv = document.getElementById('reply-edit-form-' + replyId);
+            const textarea = formDiv.querySelector('textarea');
+            const content = textarea.value.trim();
+
+             // Disable button
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            fetch('/movie/review/reply/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movieId: movieId, reviewUserEmail: reviewUserEmail, replyId: replyId, content: content })
+            })
+            .then(r => r.json())
+            .then(resp => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+
+                if (resp.status) {
+                    // Update UI
+                    const contentDiv = document.getElementById('reply-content-' + replyId);
+                    const p = contentDiv.querySelector('p');
+                    if (p) {
+                        // Preserve the HTML formatting (mentions) if returned from server, but here we just update text for simplicity
+                        // Ideally server returns formatted HTML. For now let's just update text.
+                        // Wait, the display uses: rep.content...
+                        // If I update p.textContent, I lose the HTML formatting.
+                        // I should probably manually re-apply the formatting logic or reload.
+                        // The display logic: .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(@\S+)/g, '<span class="text-accent-blue font-semibold">$1</span>')
+                        
+                        let formatted = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(@\S+)/g, '<span class="text-accent-blue font-semibold">$1</span>');
+                        p.innerHTML = formatted;
+                    }
+                    toggleEditReply(replyId);
+                } else {
+                    alert(resp.message || 'Có lỗi xảy ra');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = originalText;
+                alert('Có lỗi xảy ra');
+            });
+        }
+
+        function toggleReplyForm(userEmail) {
+            const form = document.getElementById('reply-form-' + userEmail);
+            if (form) {
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    const input = form.querySelector('input');
+                    if(input) input.focus();
+                }
+            }
+        }
+
+        function toggleRepliesList(userEmail) {
+            const list = document.getElementById('replies-list-' + userEmail);
+            const btn = document.getElementById('toggle-replies-btn-' + userEmail);
+            
+            if (list && btn) {
+                list.classList.toggle('hidden');
+                const isHidden = list.classList.contains('hidden');
+                
+                const spanText = btn.querySelector('span:first-child');
+                const icon = btn.querySelector('.material-icons-round');
+                
+                if (isHidden) {
+                    spanText.textContent = 'Hiển thị các câu trả lời';
+                    if (icon) icon.textContent = 'expand_more';
+                } else {
+                    spanText.textContent = 'Ẩn các câu trả lời';
+                    if (icon) icon.textContent = 'expand_less';
+                }
+            }
+        }
+
+        function toggleLike(movieId, reviewUserEmail, btn) {
+            fetch('/movie/review/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movieId: movieId, reviewUserEmail: reviewUserEmail })
+            })
+            .then(r => r.json())
+            .then(resp => {
+                if (resp.status && resp.data) {
+                    const countEl = btn.querySelector('.like-count');
+                    if (countEl) countEl.textContent = resp.data.likesCount;
+                    
+                    // Reset classes ensuring clean state
+                    btn.classList.remove('text-gray-500', 'hover:text-white', 'text-accent-blue');
+                    
+                    if (resp.data.isLiked) {
+                        btn.classList.add('text-accent-blue');
+                        // Optional: Animation effect
+                        const icon = btn.querySelector('.material-icons-round');
+                        if(icon) {
+                            icon.style.transform = 'scale(1.2)';
+                            setTimeout(() => icon.style.transform = 'scale(1)', 200);
+                        }
+                    } else {
+                        btn.classList.add('text-gray-500', 'hover:text-white');
+                    }
+                } else {
+                    if (resp.message === 'Unauthorized' || resp.message === 'Token hết hạn' || resp.message === 'Thiếu token') {
+                        window.location.href = '/auth/login';
+                    } else {
+                        alert(resp.message || 'Có lỗi xảy ra');
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function toggleLikeReply(movieId, reviewUserEmail, replyId, btn) {
+            fetch('/movie/review/reply/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movieId: movieId, reviewUserEmail: reviewUserEmail, replyId: replyId })
+            })
+            .then(r => r.json())
+            .then(resp => {
+                if (resp.status && resp.data) {
+                    const countEl = btn.querySelector('.like-count');
+                    if (countEl) {
+                        const count = resp.data.likesCount;
+                        countEl.textContent = count > 0 ? '(' + count + ')' : '';
+                    }
+                    
+                    btn.classList.remove('text-gray-500', 'hover:text-white', 'text-accent-blue');
+                    
+                    if (resp.data.isLiked) {
+                        btn.classList.add('text-accent-blue');
+                    } else {
+                        btn.classList.add('text-gray-500', 'hover:text-white');
+                    }
+                } else {
+                    if (resp.message === 'Unauthorized' || resp.message === 'Token hết hạn' || resp.message === 'Thiếu token') {
+                        window.location.href = '/auth/login';
+                    } else {
+                        alert(resp.message || 'Có lỗi xảy ra');
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function replyToUser(reviewUserEmail, replyUserEmail) {
+            toggleReplyForm(reviewUserEmail);
+            const form = document.getElementById('reply-form-' + reviewUserEmail);
+            if (form) {
+                const input = form.querySelector('input');
+                if (input) {
+                    input.value = '@' + replyUserEmail + ' ';
+                    input.focus();
+                }
+            }
+        }
+
+        function submitReply(movieId, reviewUserEmail, input) {
+            const content = input.value.trim();
+            if (!content) return;
+
+            fetch('/movie/review/reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movieId: movieId, reviewUserEmail: reviewUserEmail, content: content })
+            })
+            .then(r => r.json())
+            .then(resp => {
+                if (resp.status && resp.replies) {
+                    input.value = '';
+                    const listEl = document.getElementById('replies-list-' + reviewUserEmail);
+                    if (listEl) {
+                        // Update count
+                        const btn = document.getElementById('reply-btn-' + reviewUserEmail);
+                        if (btn) {
+                            const countEl = btn.querySelector('.reply-count');
+                            if (countEl) countEl.textContent = resp.replies.length;
+                        }
+
+                        // Ensure toggle button exists and list is visible
+                        let toggleBtn = document.getElementById('toggle-replies-btn-' + reviewUserEmail);
+                        if (!toggleBtn) {
+                            const btnContainer = document.createElement('div');
+                            btnContainer.className = 'mt-2 pl-4';
+                            btnContainer.innerHTML = `
+                                <button id="toggle-replies-btn-${reviewUserEmail}" 
+                                    class="text-xs text-accent-blue hover:text-white transition-colors font-medium flex items-center gap-1"
+                                    onclick="toggleRepliesList('${reviewUserEmail}')">
+                                    <span>Ẩn các câu trả lời</span>
+                                    <span class="material-icons-round text-sm">expand_less</span>
+                                </button>
+                            `;
+                            listEl.parentNode.insertBefore(btnContainer, listEl);
+                            listEl.classList.remove('hidden');
+                        } else {
+                             // If list is hidden, show it
+                             if (listEl.classList.contains('hidden')) {
+                                toggleRepliesList(reviewUserEmail);
+                             }
+                        }
+
+                        // Or just append the new one
+                        const newReply = resp.replies[resp.replies.length - 1]; // get latest
+                        if (newReply) {
+                             const div = document.createElement('div');
+                             div.className = 'bg-white/5 rounded-lg p-3 text-sm';
+                             const repId = newReply._id;
+                             
+                             div.innerHTML = `
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-white text-xs">${newReply.userEmail}</span>
+                                    <span class="text-[10px] text-gray-500">${new Date(newReply.createdAt).toLocaleString('vi-VN')}</span>
+                                </div>
+                                <div id="reply-content-${repId}">
+                                    <p class="text-gray-300 mb-2">${newReply.content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(@\S+)/g, '<span class="text-accent-blue font-semibold">$1</span>')}</p>
+                                </div>
+                                <div id="reply-edit-form-${repId}" class="hidden mb-2">
+                                    <textarea class="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white mb-2 outline-none focus:border-accent-blue transition-colors" rows="2">${newReply.content}</textarea>
+                                    <div class="flex gap-2 justify-end">
+                                        <button class="px-2 py-1 bg-white/10 text-white text-[10px] rounded hover:bg-white/20 transition-colors" onclick="toggleEditReply('${repId}')">Hủy</button>
+                                        <button class="px-2 py-1 bg-accent-blue text-white text-[10px] rounded hover:bg-blue-600 transition-colors font-bold" onclick="submitEditReply('${movieId}', '${reviewUserEmail}', '${repId}', this)">Lưu</button>
+                                    </div>
+                                </div>
+
+                                ${repId ? `
+                                <div class="flex items-center gap-3">
+                                    <button 
+                                        class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-white transition-colors group"
+                                        onclick="toggleLikeReply('${movieId}', '${reviewUserEmail}', '${repId}', this)">
+                                        <span class="font-bold hover:underline cursor-pointer">Thích</span>
+                                        <span class="like-count"></span>
+                                    </button>
+                                    <button 
+                                        class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-white transition-colors group"
+                                        onclick="replyToUser('${reviewUserEmail}', '${newReply.userEmail}')">
+                                        <span class="font-bold hover:underline cursor-pointer">Trả lời</span>
+                                    </button>
+                                    <button 
+                                        class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-white transition-colors group"
+                                        onclick="toggleEditReply('${repId}')">
+                                        <span class="font-bold hover:underline cursor-pointer">Sửa</span>
+                                    </button>
+                                </div>
+                                ` : ''}
+                             `;
+                             listEl.appendChild(div);
+                        }
+                    }
+                    // Hide form
+                    toggleReplyForm(reviewUserEmail);
+                } else {
+                    if (resp.message === 'Unauthorized' || resp.message === 'Token hết hạn' || resp.message === 'Thiếu token') {
+                        window.location.href = '/auth/login';
+                    } else {
+                        alert(resp.message || 'Có lỗi xảy ra');
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Show selected tab content
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            // Reset all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-b-2', 'border-brand-red', 'text-white', 'font-semibold');
+                btn.classList.add('text-gray-500', 'font-medium', 'relative', 'group');
+                const span = btn.querySelector('span');
+                if(span) span.style.display = 'block';
+            });
+
+            // Activate selected tab button
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-gray-500', 'font-medium', 'relative', 'group');
+            activeBtn.classList.add('border-b-2', 'border-brand-red', 'text-white', 'font-semibold');
+            const activeSpan = activeBtn.querySelector('span');
+            if(activeSpan) activeSpan.style.display = 'none';
+        }
+
+        function changeSeason(seasonNumber) {
+            // Hide all season lists
+            document.querySelectorAll('.season-content').forEach(el => el.classList.add('hidden'));
+            // Show selected season list
+            document.getElementById('season-' + seasonNumber).classList.remove('hidden');
+        }
+
+        function openActorsModal() {
+            const modal = document.getElementById('actorsModal');
+            modal.classList.remove('hidden');
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeActorsModal() {
+            const modal = document.getElementById('actorsModal');
+            modal.classList.add('hidden');
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeActorsModal();
+            }
+        });
+
+        (function() {
+            var control = document.getElementById('rating-control');
+            if (!control) return;
+            var slider = document.getElementById('rating-range');
+            var valueEl = document.getElementById('rating-value');
+            var label = document.getElementById('your-rating-label');
+            var avgEl = document.getElementById('avg-rating');
+            var countEl = document.getElementById('rating-count');
+            var sourceEl = document.getElementById('avg-source');
+            var sortSelect = document.getElementById('reviews-sort');
+            var reviewsListEl = document.getElementById('reviews-list');
+            function sortReviews() {
+                if (!reviewsListEl) return;
+                var mode = sortSelect ? sortSelect.value : 'high';
+                var items = Array.prototype.slice.call(reviewsListEl.querySelectorAll('.review-item'));
+                items.sort(function(a, b) {
+                    if (mode === 'newest') {
+                        var ua = parseInt(a.getAttribute('data-updated')) || 0;
+                        var ub = parseInt(b.getAttribute('data-updated')) || 0;
+                        return ub - ua;
+                    } else {
+                        var ra = parseFloat(a.getAttribute('data-rating')) || 0;
+                        var rb = parseFloat(b.getAttribute('data-rating')) || 0;
+                        return rb - ra;
+                    }
+                });
+                reviewsListEl.innerHTML = '';
+                items.forEach(function(el){ reviewsListEl.appendChild(el); });
+            }
+            if (sortSelect) {
+                sortSelect.addEventListener('change', sortReviews);
+                sortReviews();
+            }
+            function render(val) {
+                if (valueEl) valueEl.textContent = val;
+                if (label) {
+                    label.textContent = val ? ('Bạn đã đánh giá: ' + val + '/10') : 'Chưa đánh giá';
+                }
+            }
+            slider.addEventListener('input', function() {
+                render(parseInt(this.value));
+            });
+            slider.addEventListener('change', function() {
+                // chỉ cập nhật hiển thị, không gửi server
+                render(parseInt(this.value));
+            });
+            var submitBtn = document.getElementById('submit-rating');
+            var commentEl = document.getElementById('rating-comment');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function() {
+                    var v = parseInt(slider.value);
+                    var movieId = control.getAttribute('data-movie-id');
+                    var comment = (commentEl && commentEl.value) ? commentEl.value.trim() : "";
+                    if (!comment) {
+                        alert('Vui lòng chia sẻ cảm nhận của bạn trước khi đánh giá');
+                        if (commentEl) commentEl.focus();
+                        return;
+                    }
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = "Đang gửi...";
+
+                    fetch('/movie/rate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ movieId: movieId, rating: v, comment: comment })
+                    }).then(function(r){ return r.json(); }).then(function(resp){
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = "Đăng đánh giá";
+
+                        if (resp && resp.status) {
+                            if (resp.stats) {
+                                var tmdbEl = document.getElementById('tmdb-base-avg');
+                                var tmdbAvg = (tmdbEl && tmdbEl.dataset && tmdbEl.dataset.value !== '') ? Number(tmdbEl.dataset.value) : null;
+                                var userAvgNow = (resp.stats && resp.stats.average != null) ? Number(resp.stats.average) : null;
+                                var combinedNow = null;
+                                if (tmdbAvg != null && userAvgNow != null) {
+                                    combinedNow = (userAvgNow + tmdbAvg) / 2;
+                                } else if (userAvgNow != null) {
+                                    combinedNow = userAvgNow;
+                                } else if (tmdbAvg != null) {
+                                    combinedNow = tmdbAvg;
+                                }
+                                var combinedText = 'N/A';
+                                if (combinedNow != null && !isNaN(combinedNow)) {
+                                    combinedText = Number(combinedNow).toFixed(1);
+                                }
+                                if (avgEl) avgEl.textContent = combinedText;
+                                if (countEl) {
+                                    countEl.textContent = '(' + resp.stats.count + ' lượt)';
+                                } else {
+                                    var span = document.createElement('span');
+                                    span.id = 'rating-count';
+                                    span.className = 'text-xs text-gray-500 ml-2';
+                                    span.textContent = '(' + resp.stats.count + ' lượt)';
+                                    if(avgEl && avgEl.parentElement) avgEl.parentElement.appendChild(span);
+                                }
+                            }
+                            render(v);
+                            if (commentEl) commentEl.value = "";
+
+                            // Update reviews list immediately
+                            var reviewsList = document.getElementById('reviews-list');
+                            var noReviewsMsg = document.getElementById('no-reviews-msg');
+                            
+                            if (reviewsList && resp.review) {
+                                if (noReviewsMsg) noReviewsMsg.remove();
+                                
+                                // Remove existing review from this user if any
+                                var existing = reviewsList.querySelector('.review-item[data-user-email="' + resp.review.userEmail + '"]');
+                                if (existing) existing.remove();
+
+                                var r = resp.review;
+                                var dateStr = new Date(r.updatedAt).toLocaleString('vi-VN');
+                                var initial = (r.userEmail && r.userEmail.charAt(0).toUpperCase()) || 'U';
+                                
+                                var div = document.createElement('div');
+                                div.className = 'review-item border-b border-white/5 pb-6';
+                                div.setAttribute('data-user-email', r.userEmail);
+                                div.setAttribute('data-rating', r.rating || 0);
+                                div.setAttribute('data-updated', (r.updatedAt ? new Date(r.updatedAt).getTime() : Date.now()));
+                                
+                                var html = `
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white ring-2 ring-white/10">
+                                                ${initial}
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-white text-sm">${r.userEmail}</p>
+                                                <p class="text-xs text-gray-500">${dateStr}</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-sm text-accent-gold font-bold">
+                                            <span>${r.rating}/10</span>
+                                        </div>
+                                    </div>`;
+                                
+                                if (r.comment && r.comment.trim() !== '') {
+                                    html += `<div id="review-content-${r.userEmail}"><p class="text-gray-400 text-sm leading-relaxed pl-14 mb-3">${r.comment}</p></div>`;
+                                }
+
+                                html += `
+                                <div class="flex flex-col gap-3 pl-14">
+                                    <div class="flex items-center gap-4">
+                                        <button 
+                                            class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors group"
+                                            onclick="toggleLike('${movieId}', '${r.userEmail}', this)">
+                                            <span class="material-icons-round text-sm group-hover:text-accent-blue">thumb_up</span>
+                                            <span>Thích (<span class="like-count">0</span>)</span>
+                                        </button>
+                                        <button 
+                                            id="reply-btn-${r.userEmail}"
+                                            class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors group"
+                                            onclick="toggleReplyForm('${r.userEmail}')">
+                                            <span class="material-icons-round text-sm group-hover:text-accent-blue">reply</span>
+                                            <span>Trả lời (<span class="reply-count">0</span>)</span>
+                                        </button>
+                                        <button 
+                                            class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors group"
+                                            onclick="toggleEditReview('${r.userEmail}')">
+                                            <span class="material-icons-round text-sm group-hover:text-accent-blue">edit</span>
+                                            <span>Sửa</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Reply Form -->
+                                    <div id="reply-form-${r.userEmail}" class="hidden mt-2">
+                                        <div class="flex gap-3">
+                                            <input type="text" 
+                                                class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-accent-blue outline-none"
+                                                placeholder="Viết câu trả lời..."
+                                                onkeydown="if(event.key==='Enter') submitReply('${movieId}', '${r.userEmail}', this)">
+                                            <button class="text-accent-blue text-sm font-bold hover:text-white" onclick="submitReply('${movieId}', '${r.userEmail}', this.previousElementSibling)">Gửi</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Replies List -->
+                                    <div id="replies-list-${r.userEmail}" class="flex flex-col gap-2 mt-2">
+                                    </div>
+                                    
+                                    <div id="review-edit-form-${r.userEmail}" class="hidden pl-14 mb-3">
+                                        <textarea class="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white mb-2 outline-none focus:border-accent-blue transition-colors" rows="3">${r.comment || ''}</textarea>
+                                        <div class="flex gap-2 justify-end">
+                                            <button class="px-3 py-1 bg-white/10 text-white text-xs rounded hover:bg-white/20 transition-colors" onclick="toggleEditReview('${r.userEmail}')">Hủy</button>
+                                            <button class="px-3 py-1 bg-accent-blue text-white text-xs rounded hover:bg-blue-600 transition-colors font-bold" 
+                                                data-email="${r.userEmail}" 
+                                                data-rating="${r.rating || 0}"
+                                                data-movie-id="${movieId}"
+                                                onclick="submitEditReview(this.getAttribute('data-movie-id'), this.getAttribute('data-email'), this.getAttribute('data-rating'), this)">Lưu</button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                                
+                                div.innerHTML = html;
+                                reviewsList.insertBefore(div, reviewsList.firstChild);
+                                
+                                var sortSelect = document.getElementById('reviews-sort');
+                                if (sortSelect) {
+                                    sortReviews();
+                                }
+                                
+                                if (control) {
+                                    control.classList.add('hidden');
+                                }
+                                if (commentEl) {
+                                    commentEl.classList.add('hidden');
+                                }
+                                var submitBtnEl = document.getElementById('submit-rating');
+                                if (submitBtnEl) {
+                                    submitBtnEl.classList.add('hidden');
+                                }
+                            }
+                        } else {
+                            alert(resp.message || "Có lỗi xảy ra");
+                        }
+                    }).catch(function(err){
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = "Đăng đánh giá";
+                        console.error(err);
+                        alert("Lỗi kết nối server");
+                    });
+                });
+            }
+        })();
+        function toggleFavorite(movieId) {
+            fetch('/movie/favorite/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ movieId: movieId })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = '/auth/login';
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status) {
+                    const btn = document.getElementById('btn-favorite');
+                    const icon = btn.querySelector('.material-icons-round');
+                    if (data.isFavorite) {
+                        icon.textContent = 'favorite';
+                        icon.classList.add('text-brand-red');
+                    } else {
+                        icon.textContent = 'favorite_border';
+                        icon.classList.remove('text-brand-red');
+                    }
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+    </script>
+</body>
+
+</html>

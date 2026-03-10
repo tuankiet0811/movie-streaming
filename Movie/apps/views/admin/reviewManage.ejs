@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partials/head'); %>
+    <title>Quản lý Đánh giá</title>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.15); border-radius: 24px; }
+    </style>
+    <script>
+        function loadMovies(page) {
+            const kw = document.getElementById('keyword').value.trim();
+            const type = document.getElementById('type').value;
+            fetch(`/admin/reviewmanage/movie-list?page=${page}&limit=10&keyword=${encodeURIComponent(kw)}&type=${encodeURIComponent(type)}`)
+                .then(r => r.json())
+                .then(res => {
+                    const list = document.getElementById('movie-list');
+                    const pager = document.getElementById('movie-pager');
+                    list.innerHTML = (res.data || []).map(m => {
+                        const poster = m.poster_path ? (String(m.poster_path).startsWith('http') ? m.poster_path : ('https://image.tmdb.org/t/p/w185' + m.poster_path)) : 'https://via.placeholder.com/60x90?text=No+Img';
+                        const title = m.title || '';
+                        const typeLabel = m.media_type === 'tv' ? 'TV' : 'Movie';
+                        return (
+                            '<div class="flex items-center gap-3 p-3 border-b border-white/10">' +
+                                '<img src="' + poster + '" alt="' + title + '" class="w-[40px] h-[60px] object-cover rounded">' +
+                                '<div class="flex-1 min-w-0">' +
+                                    '<p class="text-sm font-bold text-white truncate">' + title + '</p>' +
+                                    '<p class="text-xs text-gray-400">' + typeLabel + '</p>' +
+                                '</div>' +
+                                '<button class="px-3 py-1 rounded bg-white/10 text-white text-xs hover:bg-white/20" onclick="loadRatings(\'' + m._id + '\', \'' + (title.replace(/"/g,'&quot;')) + '\')">Xem bình luận</button>' +
+                            '</div>'
+                        );
+                    }).join('');
+                    pager.innerHTML = '';
+                    const totalPages = res.totalPages || 0;
+                    const current = res.page || 1;
+                    if (totalPages > 1) {
+                        for (let i = 1; i <= totalPages; i++) {
+                            pager.innerHTML += '<button class="px-2 py-1 rounded ' + (i===current?'bg-primary text-white':'bg-white/10 text-gray-300 hover:bg-white/20') + ' text-xs mr-1" onclick="loadMovies('+i+')">'+i+'</button>';
+                        }
+                    }
+                });
+        }
+        function loadRatings(movieId, title) {
+            document.getElementById('ratings-title').textContent = title;
+            fetch('/admin/reviewmanage/ratings?movieId=' + encodeURIComponent(movieId))
+                .then(r => r.json())
+                .then(items => {
+                    const list = document.getElementById('ratings-list');
+                    if (!Array.isArray(items) || items.length === 0) {
+                        list.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Không có bình luận</div>';
+                        return;
+                    }
+                    list.innerHTML = items.map(it => {
+                        const email = it.userEmail || '';
+                        const rating = it.rating != null ? Number(it.rating).toFixed(1) : '';
+                        const comment = it.comment || '';
+                        const time = it.updatedAt ? new Date(it.updatedAt).toLocaleString('vi-VN') : '';
+                        return (
+                            '<div class="p-3 border-b border-white/10">' +
+                                '<div class="flex justify-between items-center">' +
+                                    '<p class="text-sm text-white font-bold">' + email + '</p>' +
+                                    '<div class="flex items-center gap-2">' +
+                                        '<span class="text-yellow-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> ' + rating + '</span>' +
+                                        '<button class="px-2 py-1 rounded bg-red-600 text-white text-xs hover:bg-red-700" onclick="deleteRating(\'' + movieId + '\', \'' + email + '\')">Xóa</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<p class="text-xs text-gray-400 mt-1">' + time + '</p>' +
+                                '<p class="text-sm text-gray-200 mt-2 break-words">' + comment + '</p>' +
+                            '</div>'
+                        );
+                    }).join('');
+                });
+        }
+        function deleteRating(movieId, userEmail) {
+            if (!confirm('Xóa bình luận này?')) return;
+            fetch('/admin/reviewmanage/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movieId: movieId, userEmail: userEmail })
+            }).then(r => r.json()).then(resp => {
+                if (resp && resp.status) {
+                    const title = document.getElementById('ratings-title').textContent;
+                    loadRatings(movieId, title);
+                } else {
+                    alert('Không thể xóa');
+                }
+            }).catch(() => alert('Lỗi kết nối'));
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            var metaEl = document.getElementById('admin-current-page');
+            var cp = 1;
+            if (metaEl && metaEl.dataset && metaEl.dataset.value) {
+                var v = parseInt(metaEl.dataset.value);
+                if (!isNaN(v)) cp = v;
+            }
+            loadMovies(cp);
+        });
+    </script>
+</head>
+<body class="font-display bg-background-dark text-slate-200 antialiased selection:bg-primary selection:text-white overflow-hidden h-screen flex">
+    <span id="admin-current-page" data-value="<%= (typeof currentPage !== 'undefined' && currentPage) ? currentPage : 1 %>" class="hidden"></span>
+    <%- include('partials/sidebar', { page: page }); %>
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background-dark">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-glow opacity-30 pointer-events-none z-0"></div>
+        <%- include('partials/header') %>
+        <div class="flex-1 overflow-y-auto p-8 relative z-10">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary">rate_review</span>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Quản lý Đánh giá</h1>
+                        <p class="text-xs text-gray-500 mt-0.5">Xem và quản lý bình luận của người dùng theo từng phim</p>
+                    </div>
+                </div>
+                <div class="hidden lg:flex items-center gap-2">
+                    <a href="/admin" class="px-3 py-2 text-xs rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[18px]">dashboard</span>
+                        Bảng điều khiển
+                    </a>
+                </div>
+            </div>
+            <div class="max-w-[1600px] mx-auto space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5">
+                    <div class="rounded-xl border border-border-dark bg-white/5">
+                        <div class="px-4 py-3 border-b border-border-dark flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined">movie</span>
+                                <h2 class="text-sm font-bold text-white">Danh sách phim</h2>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-3">
+                                <input id="keyword" type="text" class="flex-1 bg-surface-dark/50 border border-white/5 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Tìm phim theo tên">
+                                <select id="type" class="bg-surface-dark/50 border border-white/5 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none">
+                                    <option value="all">Tất cả</option>
+                                    <option value="movie">Phim lẻ</option>
+                                    <option value="tv">Phim bộ</option>
+                                </select>
+                                <button class="px-3 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90 transition-colors" onclick="loadMovies(1)">Lọc</button>
+                            </div>
+                            <div id="movie-list" class="max-h-[520px] overflow-y-auto custom-scrollbar"></div>
+                            <div id="movie-pager" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-7">
+                    <div class="rounded-xl border border-border-dark bg-white/5">
+                        <div class="px-4 py-3 border-b border-border-dark flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined">chat</span>
+                                <h2 class="text-sm font-bold text-white">Bình luận: <span id="ratings-title" class="text-primary"></span></h2>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div id="ratings-list" class="max-h-[520px] overflow-y-auto custom-scrollbar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

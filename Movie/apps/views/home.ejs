@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partical/header'); %>
+    <title>StreamLine - Trải nghiệm điện ảnh</title>
+</head>
+<body class="bg-background-dark text-white font-display antialiased selection:bg-primary selection:text-white">
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+        <%- include('partical/menu'); %>
+        
+        <main class="flex-grow flex flex-col">
+    <section class="relative w-full min-h-[85vh] flex items-end pb-24 px-4 sm:px-6 lg:px-10 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <% if (latestMovie) { %>
+                <img alt="<%= latestMovie.title %>" class="w-full h-full object-cover scale-105 animate-[pulse_10s_ease-in-out_infinite]" src="<%= (latestMovie.backdrop_path && latestMovie.backdrop_path.startsWith('http')) ? latestMovie.backdrop_path : 'https://image.tmdb.org/t/p/original' + latestMovie.backdrop_path %>" style="animation: none; transform: scale(1.05);"/>
+            <% } else { %>
+                <img alt="Cảnh tối điện ảnh với ánh sáng u ám và sương mù" class="w-full h-full object-cover scale-105 animate-[pulse_10s_ease-in-out_infinite]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGTcSt9a3buj8uVBsX3NPaqqa3fV8dsmjE3J9D1X45E_B2GP46DxHTSnFhLDI6Gu23UrodUZBe1iT2xZaB73st1EkOEtntbovFmKE7CdEmMmohje5gUSMqfeLMQlq72SxbMhsyMVlVlPQcrUo2mwNPc-XDGD8QcRyfPJ9ZnsC0jrs8pR29t1MvKjvnDPGmZwkblqTcRIRmt4_nDJEruegFmdvfDhP1SZqQblEvT376hRjgSxl0pUyyNqWA2c4BhBEthc6kNXx--ik" style="animation: none; transform: scale(1.05);"/>
+            <% } %>
+            <div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/40 to-black/30"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-background-dark via-background-dark/60 to-transparent"></div>
+            <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-background-dark to-transparent"></div>
+        </div>
+        <div class="relative z-10 max-w-7xl w-full mx-auto lg:mx-0">
+            <div class="space-y-6 max-w-3xl">
+                <% if (latestMovie) { %>
+                <div class="flex items-center gap-3 animate-fade-in-up">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/20 text-primary text-[11px] font-bold uppercase tracking-wider shadow-glow">
+                        <span class="material-symbols-outlined text-[14px]">local_fire_department</span> 
+                        #1 Mới nhất
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold uppercase tracking-wider">
+                        <%= latestMovie.media_type === 'tv' ? 'Phim bộ' : 'Phim lẻ' %>
+                    </span>
+                </div>
+                <h1 class="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[0.9] drop-shadow-2xl">
+                    <%= latestMovie.title %>
+                </h1>
+                <% if (latestMovie.original_title || latestMovie.original_name) { %>
+                    <h2 class="text-2xl md:text-3xl font-bold text-accent-gold mt-2 drop-shadow-md tracking-tight font-display">
+                        <%= latestMovie.original_title || latestMovie.original_name %>
+                    </h2>
+                <% } %>
+                <div class="flex items-center gap-4 text-sm font-medium text-gray-300">
+                    <span class="text-yellow-400 font-bold flex items-center gap-1"><i class="fa-solid fa-star"></i> <% 
+                        var lUserAvg = (typeof latestRatingStats !== 'undefined' && latestRatingStats && latestRatingStats.count > 0) ? Number(latestRatingStats.average) : null;
+                        var lTmdbAvg = latestMovie && latestMovie.vote_average ? Number(latestMovie.vote_average) : null;
+                        var lCombined = null;
+                        if (lUserAvg != null && lTmdbAvg != null) lCombined = (lUserAvg + lTmdbAvg)/2;
+                        else if (lUserAvg != null) lCombined = lUserAvg;
+                        else if (lTmdbAvg != null) lCombined = lTmdbAvg;
+                    %><%= lCombined != null ? lCombined.toFixed(1) : 'N/A' %></span>
+                    <span><%= latestMovie.release_date ? new Date(latestMovie.release_date).getFullYear() : 'N/A' %></span>
+                    <span class="border border-white/20 px-1 rounded text-xs">4K</span>
+                    <span class="border border-white/20 px-1 rounded text-xs">HDR</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <% if (latestMovie.genre_ids && latestMovie.genre_ids.length > 0 && typeof allGenres !== 'undefined') { %>
+                        <% latestMovie.genre_ids.forEach(function(genreId) { %>
+                            <% var genre = allGenres.find(g => g._id.toString() === genreId.toString()); %>
+                            <% if (genre) { %>
+                                <span class="px-3 py-1 rounded bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold text-gray-200 hover:bg-white/20 transition-all">
+                                    <%= genre.Name %>
+                                </span>
+                            <% } %>
+                        <% }); %>
+                    <% } %>
+                </div>
+                <p class="text-lg text-gray-300 max-w-2xl font-normal leading-relaxed line-clamp-3 drop-shadow-md">
+                    <%= latestMovie.overview %>
+                </p>
+                <% } else { %>
+                <div class="flex items-center gap-3 animate-fade-in-up">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/20 text-primary text-[11px] font-bold uppercase tracking-wider shadow-glow">
+                        <span class="material-symbols-outlined text-[14px]">local_fire_department</span> 
+                        #1 Thịnh hành
+                    </span>
+                </div>
+                <h1 class="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[0.9] drop-shadow-2xl">
+                    SOLARIS <br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-blue-600 drop-shadow-[0_0_15px_rgba(0,240,255,0.4)]">REDUX</span>
+                </h1>
+                <div class="flex items-center gap-4 text-sm font-medium text-gray-300">
+                    <span class="text-yellow-400 font-bold flex items-center gap-1"><i class="fa-solid fa-star"></i> 9.8</span>
+                    <span>2024</span>
+                    <span class="border border-white/20 px-1 rounded text-xs">4K</span>
+                    <span class="border border-white/20 px-1 rounded text-xs">HDR</span>
+                    <span>2g 14p</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1 rounded bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold text-gray-200 hover:bg-white/20 transition-all">
+                        Khoa học viễn tưởng
+                    </span>
+                    <span class="px-3 py-1 rounded bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold text-gray-200 hover:bg-white/20 transition-all">
+                        Giật gân
+                    </span>
+                </div>
+                <p class="text-lg text-gray-300 max-w-2xl font-normal leading-relaxed line-clamp-3 drop-shadow-md">
+                    Một nhà tâm lý học được gửi đến một trạm không gian quay quanh một hành tinh xa xôi để khám phá nguyên nhân khiến phi hành đoàn phát điên. Một kiệt tác khoa học viễn tưởng được tái hiện cho thời đại hiện đại với hình ảnh 4K tuyệt đẹp và âm thanh Dolby Atmos.
+                </p>
+                <% } %>
+                <div class="flex flex-wrap items-center gap-4 pt-4">
+                    <% if (typeof latestMovie !== 'undefined' && latestMovie) { %>
+                    <a href="/movie/watch?id=<%= latestMovie._id %>" class="flex items-center gap-3 h-14 px-8 rounded-full bg-gradient-to-r from-primary to-primary-hover text-white text-base font-bold hover:shadow-[0_0_30px_rgba(229,9,20,0.6)] hover:scale-105 transition-all duration-300 border border-white/10">
+                        <span class="material-symbols-outlined text-[28px] fill-current">play_arrow</span>
+                        Xem Ngay
+                    </a>
+                    <% } else { %>
+                    <button class="flex items-center gap-3 h-14 px-8 rounded-full bg-gradient-to-r from-primary to-primary-hover text-white text-base font-bold hover:shadow-[0_0_30px_rgba(229,9,20,0.6)] hover:scale-105 transition-all duration-300 border border-white/10">
+                        <span class="material-symbols-outlined text-[28px] fill-current">play_arrow</span>
+                        Xem Ngay
+                    </button>
+                    <% } %>
+                    <% if (typeof latestMovie !== 'undefined' && latestMovie) { %>
+                    <a href="/movie/detail?id=<%= latestMovie._id %>" class="flex items-center gap-3 h-14 px-8 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-base font-bold hover:bg-white/20 transition-all duration-300 group">
+                        <span class="material-symbols-outlined text-[24px] group-hover:rotate-12 transition-transform">info</span>
+                        Thông Tin Thêm
+                    </a>
+                    <% } else { %>
+                    <button class="flex items-center gap-3 h-14 px-8 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-base font-bold hover:bg-white/20 transition-all duration-300 group">
+                        <span class="material-symbols-outlined text-[24px] group-hover:rotate-12 transition-transform">info</span>
+                        Thông Tin Thêm
+                    </button>
+                    <% } %>
+                    <button class="flex items-center justify-center size-14 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all duration-300 group tooltip" title="Thêm vào danh sách xem">
+                        <span class="material-symbols-outlined text-[24px]">add</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background-dark to-transparent pointer-events-none z-0"></div>
+    </section>
+    
+    <section class="w-full px-4 sm:px-6 lg:px-10 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-baseline gap-4">
+                <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">Phim Hoạt Hình Ưa Chuộng</h2>
+                <div class="h-px w-12 bg-primary/50 self-center hidden sm:block"></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleAnimation(-1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+                <button onclick="toggleAnimation(1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+            </div>
+        </div>
+        
+        <% 
+            const animations = (typeof popularAnimationMovies !== 'undefined' && popularAnimationMovies) ? popularAnimationMovies : [];
+            const aChunk1 = animations.slice(0,6);
+            const aChunk2 = animations.slice(6,12);
+        %>
+        <div id="animation-group-0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            <% aChunk1.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <div id="animation-group-1" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 hidden">
+            <% aChunk2.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <script>
+            let currentAnimationGroup = 0;
+            function toggleAnimation(direction){
+                const next = Math.max(0, Math.min(1, currentAnimationGroup + direction));
+                if (next === currentAnimationGroup) return;
+                document.getElementById('animation-group-' + currentAnimationGroup).classList.add('hidden');
+                document.getElementById('animation-group-' + next).classList.remove('hidden');
+                currentAnimationGroup = next;
+            }
+        </script>
+    </section>
+    
+    <section class="w-full px-4 sm:px-6 lg:px-10 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-baseline gap-4">
+                <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">Đang Thịnh Hành</h2>
+                <div class="h-px w-12 bg-primary/50 self-center hidden sm:block"></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleTrending(-1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+                <button onclick="toggleTrending(1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+            </div>
+        </div>
+        
+        <% 
+            const trending = (typeof trendingMovies !== 'undefined' && trendingMovies) ? trendingMovies : [];
+            const chunk1 = trending.slice(0,6);
+            const chunk2 = trending.slice(6,12);
+        %>
+        <div id="trending-group-0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            <% chunk1.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <div id="trending-group-1" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 hidden">
+            <% chunk2.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <script>
+            let currentTrendingGroup = 0;
+            function toggleTrending(direction){
+                const next = Math.max(0, Math.min(1, currentTrendingGroup + direction));
+                if (next === currentTrendingGroup) return;
+                document.getElementById('trending-group-' + currentTrendingGroup).classList.add('hidden');
+                document.getElementById('trending-group-' + next).classList.remove('hidden');
+                currentTrendingGroup = next;
+            }
+        </script>
+    </section>
+    
+    <section class="w-full px-4 sm:px-6 lg:px-10 py-4">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-baseline gap-4">
+                <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">Kinh Dị Phổ Biến</h2>
+                <div class="h-px w-12 bg-primary/50 self-center hidden sm:block"></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleHorror(-1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+                <button onclick="toggleHorror(1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+            </div>
+        </div>
+        
+        <% 
+            const horror = (typeof popularHorrorMovies !== 'undefined' && popularHorrorMovies) ? popularHorrorMovies : [];
+            const hChunk1 = horror.slice(0,6);
+            const hChunk2 = horror.slice(6,12);
+        %>
+        <div id="horror-group-0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            <% hChunk1.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <div id="horror-group-1" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 hidden">
+            <% hChunk2.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <script>
+            let currentHorrorGroup = 0;
+            function toggleHorror(direction){
+                const next = Math.max(0, Math.min(1, currentHorrorGroup + direction));
+                if (next === currentHorrorGroup) return;
+                document.getElementById('horror-group-' + currentHorrorGroup).classList.add('hidden');
+                document.getElementById('horror-group-' + next).classList.remove('hidden');
+                currentHorrorGroup = next;
+            }
+        </script>
+    </section>
+    
+    <section class="w-full px-4 sm:px-6 lg:px-10 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-baseline gap-4">
+                <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">Phim Hàn Quốc Đình Đám</h2>
+                <div class="h-px w-12 bg-primary/50 self-center hidden sm:block"></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleKorean(-1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+                <button onclick="toggleKorean(1)" class="size-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white transition-all text-gray-400">
+                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+            </div>
+        </div>
+        
+        <% 
+            const korean = (typeof popularKoreanMovies !== 'undefined' && popularKoreanMovies) ? popularKoreanMovies : [];
+            const kChunk1 = korean.slice(0,6);
+            const kChunk2 = korean.slice(6,12);
+        %>
+        <div id="korean-group-0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            <% kChunk1.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <div id="korean-group-1" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 hidden">
+            <% kChunk2.forEach(function(item){ %>
+                <a href="/movie/detail?id=<%= item._id %>" class="group relative block rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+                    <div class="aspect-[2/3] w-full overflow-hidden">
+                        <img alt="Poster phim <%= item.title %>" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>"/>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors"><%= item.title %></h3>
+                        <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                            <% 
+                                var gName = '';
+                                if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                                    var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                                    gName = g ? g.Name : '';
+                                }
+                            %>
+                            <span><%= gName %></span>
+                            <span class="text-primary">•</span>
+                            <span class="text-green-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                                var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                var uAvg = rs ? Number(rs.average) : null;
+                                var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                var comb = null;
+                                if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                else if (uAvg != null) comb = uAvg;
+                                else if (tAvg != null) comb = tAvg;
+                            %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+        <script>
+            let currentKoreanGroup = 0;
+            function toggleKorean(direction){
+                const next = Math.max(0, Math.min(1, currentKoreanGroup + direction));
+                if (next === currentKoreanGroup) return;
+                document.getElementById('korean-group-' + currentKoreanGroup).classList.add('hidden');
+                document.getElementById('korean-group-' + next).classList.remove('hidden');
+                currentKoreanGroup = next;
+            }
+        </script>
+    </section>
+
+    <%- include('partical/footer'); %>
+    </main>
+    </div>
+</body>
+</html>

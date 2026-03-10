@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partical/header'); %>
+    <title>StreamLine - Xem Phim & Chương Trình Truyền Hình</title>
+</head>
+<body class="font-display bg-background-dark text-white min-h-screen flex flex-col antialiased selection:bg-primary selection:text-white">
+    <%- include('partical/menu'); %>
+    
+    <div class="fixed inset-0 z-0">
+        <div class="absolute inset-0 bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuAcQVFNPS3mjbzevlQ-Y3JtwcWCP60vPM9m--EEd3nDXn78EvRMwlMaZkMp1ykHbKSp4BITN5S4CYm4lQ6ArqF2Tb-Z3giyBANF4kJvwq5Sq09TGEPjbDQm6VOOECrbKKHO5cOiEnSLEAAvki0_YXbaQ8In1ZWSNQchZwQ4oPktNAz8UqRM24dfKyIhKgCUbBl7wCg1Pp2cftVCy6BUYLOJzRnGEvMmZ5M8CripddCVaH2UhV5t1N9rjdD95Z4SpiL34pimEf5H4zA')] bg-cover bg-center opacity-40"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-background-dark via-transparent to-background-dark"></div>
+        <div class="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-[100px]"></div>
+        <div class="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-accent-glow/10 blur-[100px]"></div>
+    </div>
+
+    <main class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
+        <div class="max-w-4xl space-y-8">
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-lg leading-tight">
+                Chương trình truyền hình, phim không giới hạn và nhiều nội dung khác
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-200 font-medium">
+                Xem ở mọi nơi. Hủy bất kỳ lúc nào.
+            </p>
+            <p class="text-lg text-gray-400">
+                Bạn đã sẵn sàng xem chưa? Nhập email để tạo hoặc kích hoạt lại tư cách thành viên của bạn.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+                <a href="/auth/register" class="btn-primary-lg px-8 py-4 text-xl font-bold bg-primary hover:bg-primary-hover rounded-lg transition-all shadow-[0_0_20px_rgba(229,9,20,0.5)] hover:shadow-[0_0_30px_rgba(229,9,20,0.7)] flex items-center gap-2">
+                    Bắt đầu ngay
+                    <span class="material-symbols-outlined text-2xl">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partical/footer'); %>
+</body>
+</html>

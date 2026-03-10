@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partical/header'); %>
+    <title><%= title %></title>
+    <script>
+        function toggleGenre(genreId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            let genres = urlParams.getAll('genres');
+            
+            if (genres.includes(genreId)) {
+                genres = genres.filter(g => g !== genreId);
+            } else {
+                genres.push(genreId);
+            }
+            
+            urlParams.delete('genres');
+            genres.forEach(g => urlParams.append('genres', g));
+            urlParams.set('page', '1'); // Reset to page 1
+            
+            window.location.search = urlParams.toString();
+        }
+
+        function setFilter(key, value) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (value === 'all' || value === '') {
+                urlParams.delete(key);
+            } else {
+                urlParams.set(key, value);
+            }
+            urlParams.set('page', '1');
+            window.location.search = urlParams.toString();
+        }
+    </script>
+</head>
+<body class="bg-background-dark text-white font-display antialiased selection:bg-primary selection:text-white">
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+        <%- include('partical/menu'); %>
+        
+        <main class="flex-grow flex flex-col pt-24 px-4 sm:px-6 lg:px-12 pb-12">
+            
+            
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-yellow-500">filter_alt</span>
+                    <h2 class="text-xl font-bold text-white">Bộ lọc</h2>
+                </div>
+                
+                <div class="bg-[#141414] rounded-xl border border-white/10 p-6 space-y-6">
+                    
+                    
+                    <div class="flex items-start gap-4">
+                        <span class="w-32 text-gray-400 font-bold shrink-0 pt-1">Quốc gia:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setFilter('country', 'all')" 
+                                class="<%= selectedCountry === 'all' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Tất cả
+                            </button>
+                            <button onclick="setFilter('country', 'en')" 
+                                class="<%= selectedCountry === 'en' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Âu Mỹ
+                            </button>
+                            <button onclick="setFilter('country', 'ko')" 
+                                class="<%= selectedCountry === 'ko' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Hàn Quốc
+                            </button>
+                            <button onclick="setFilter('country', 'zh')" 
+                                class="<%= selectedCountry === 'zh' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Trung Quốc
+                            </button>
+                            <button onclick="setFilter('country', 'ja')" 
+                                class="<%= selectedCountry === 'ja' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Nhật Bản
+                            </button>
+                            <button onclick="setFilter('country', 'vi')" 
+                                class="<%= selectedCountry === 'vi' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Việt Nam
+                            </button>
+                            <button onclick="setFilter('country', 'th')" 
+                                class="<%= selectedCountry === 'th' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Thái Lan
+                            </button>
+                        </div>
+                    </div>
+
+                    
+                    <div class="flex items-start gap-4">
+                        <span class="w-32 text-gray-400 font-bold shrink-0 pt-1">Loại phim:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setFilter('mediaType', 'all')" 
+                                class="<%= selectedMediaType === 'all' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Tất cả
+                            </button>
+                            <button onclick="setFilter('mediaType', 'movie')" 
+                                class="<%= selectedMediaType === 'movie' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Phim lẻ
+                            </button>
+                            <button onclick="setFilter('mediaType', 'tv')" 
+                                class="<%= selectedMediaType === 'tv' ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Phim bộ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Thể loại -->
+                    <div class="flex items-start gap-4">
+                        <span class="w-32 text-gray-400 font-bold shrink-0 pt-1">Thể loại:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="const urlParams = new URLSearchParams(window.location.search); urlParams.delete('genres'); urlParams.set('page', '1'); window.location.search = urlParams.toString();" 
+                                class="<%= (!selectedGenres || selectedGenres.length === 0) ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Tất cả
+                            </button>
+                            <% if (typeof allGenres !== 'undefined' && allGenres) { %>
+                                <% allGenres.forEach(function(genre) { %>
+                                    <button onclick="toggleGenre('<%= genre._id %>')" 
+                                        class="<%= (selectedGenres && selectedGenres.includes(genre._id.toString())) ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                        <%= genre.Name %>
+                                    </button>
+                                <% }); %>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Năm sản xuất -->
+                    <div class="flex items-start gap-4">
+                        <span class="w-32 text-gray-400 font-bold shrink-0 pt-1">Năm sản xuất:</span>
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <button onclick="setFilter('year', '')" 
+                                class="<%= !selectedYear ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                Tất cả
+                            </button>
+                            <% 
+                            const currentYear = new Date().getFullYear();
+                            for(let y = currentYear; y >= currentYear - 15; y--) { 
+                            %>
+                                <button onclick="setFilter('year', '<%= y %>')" 
+                                    class="<%= selectedYear == y ? 'bg-yellow-500 text-black font-bold' : 'text-gray-300 hover:text-white hover:bg-white/10' %> px-3 py-1 rounded text-sm transition-colors">
+                                    <%= y %>
+                                </button>
+                            <% } %>
+                            <div class="relative ml-2">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-400">
+                                    <span class="material-symbols-outlined text-[16px]">search</span>
+                                </span>
+                                <input type="number" placeholder="Nhập năm" value="<%= selectedYear %>"
+                                    onkeypress="if(event.key === 'Enter') setFilter('year', this.value)"
+                                    class="bg-white/5 border border-white/20 rounded-lg py-1 pl-8 pr-3 text-sm text-white focus:outline-none focus:border-yellow-500 w-32 placeholder-gray-500"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Active Filters & Clear -->
+                <% if (selectedMediaType !== 'all' || selectedCountry !== 'all' || (selectedGenres && selectedGenres.length > 0) || selectedYear) { %>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-400">
+                        Tìm thấy <span class="text-white font-bold"><%= totalItems %></span> kết quả
+                    </div>
+                    <a href="/home/discover" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">close</span>
+                        Xóa bộ lọc
+                    </a>
+                </div>
+                <% } else { %>
+                    <div class="mt-4 text-sm text-gray-400 text-right">
+                        Tìm thấy <span class="text-white font-bold"><%= totalItems %></span> kết quả
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Results Grid -->
+            <% if (items.length > 0) { %>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    <% items.forEach(function(item) { %>
+                        <a href="/movie/detail?id=<%= item._id %>" class="group relative block aspect-[2/3] rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all duration-300 hover:shadow-[0_0_20px_rgba(229,9,20,0.4)]">
+                            <img src="<%= (item.poster_path && item.poster_path.startsWith('http')) ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path %>" 
+                                alt="<%= item.title %>" 
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                                loading="lazy"
+                            >
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                                <h3 class="text-white font-bold text-lg leading-tight mb-1 line-clamp-2"><%= item.title %></h3>
+                                <div class="flex items-center gap-2 text-xs text-gray-300 mb-2">
+                                    <span><%= item.release_date ? new Date(item.release_date).getFullYear() : 'N/A' %></span>
+                                    <span class="w-1 h-1 rounded-full bg-gray-500"></span>
+                                    <span class="flex items-center gap-1 text-yellow-400">
+                                        <i class="fa-solid fa-star text-[10px]"></i> <% 
+                                            var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                                            var uAvg = rs ? Number(rs.average) : null;
+                                            var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                                            var comb = null;
+                                            if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                                            else if (uAvg != null) comb = uAvg;
+                                            else if (tAvg != null) comb = tAvg;
+                                        %><%= comb != null ? comb.toFixed(1) : 'N/A' %>
+                                    </span>
+                                </div>
+                                <button class="w-full bg-white text-black font-bold py-2 rounded text-sm hover:bg-primary hover:text-white transition-colors flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                                    Xem ngay
+                                </button>
+                            </div>
+
+                            <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs font-bold text-white border border-white/10">
+                                <%= item.media_type === 'tv' ? 'TV' : 'Movie' %>
+                            </div>
+                        </a>
+                    <% }); %>
+                </div>
+
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                    <div class="mt-12 flex justify-center">
+                        <div class="flex items-center gap-2 bg-[#141414] border border-white/10 rounded-full p-1">
+                            <% 
+                            // Construct query string for pagination
+                            let queryParams = `mediaType=${selectedMediaType}&country=${selectedCountry}&year=${selectedYear}`;
+                            if (selectedGenres && selectedGenres.length > 0) {
+                                selectedGenres.forEach(g => queryParams += `&genres=${g}`);
+                            }
+                            %>
+
+                            <% if (currentPage > 1) { %>
+                                <a href="/home/discover?page=<%= currentPage - 1 %>&<%= queryParams %>" class="size-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition-colors">
+                                    <span class="material-symbols-outlined">chevron_left</span>
+                                </a>
+                            <% } %>
+                            
+                            <% for(let i = 1; i <= totalPages; i++) { %>
+                                <% if (i === currentPage || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) { %>
+                                    <a href="/home/discover?page=<%= i %>&<%= queryParams %>" 
+                                       class="size-10 flex items-center justify-center rounded-full font-bold text-sm transition-all <%= i === currentPage ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-gray-400 hover:text-white hover:bg-white/10' %>">
+                                        <%= i %>
+                                    </a>
+                                <% } else if (i === currentPage - 2 || i === currentPage + 2) { %>
+                                    <span class="text-gray-600 px-1">...</span>
+                                <% } %>
+                            <% } %>
+
+                            <% if (currentPage < totalPages) { %>
+                                <a href="/home/discover?page=<%= currentPage + 1 %>&<%= queryParams %>" class="size-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition-colors">
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div class="flex flex-col items-center justify-center py-20 text-center">
+                    <div class="size-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-4xl text-gray-500">movie_off</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Không tìm thấy phim nào</h3>
+                    <p class="text-gray-400 max-w-md mx-auto">Thử điều chỉnh bộ lọc của bạn để tìm thấy nhiều kết quả hơn.</p>
+                </div>
+            <% } %>
+        </main>
+    </div>
+</body>
+</html>

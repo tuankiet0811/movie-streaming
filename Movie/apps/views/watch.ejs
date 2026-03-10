@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partical/header'); %>
+    <title>Xem phim <%= (movie && (movie.title || movie.name)) || '' %> - StreamLine</title>
+</head>
+<body class="bg-brand-dark text-gray-200 font-display min-h-screen selection:bg-brand-red selection:text-white overflow-x-hidden">
+    <%- include('partical/menu'); %>
+    <% 
+        var activeTab = (movie && movie.media_type === 'tv') ? 'episodes' : 'overview';
+    %>
+    
+    <div class="relative w-full pt-20 overflow-hidden">
+         <!-- Background effects -->
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-[128px] pointer-events-none"></div>
+        <div class="absolute top-20 right-1/4 w-96 h-96 bg-brand-red/10 rounded-full blur-[128px] pointer-events-none"></div>
+
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-6 py-6">
+            <% if (movie) { %>
+                <div class="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-2xl relative group ring-1 ring-white/10">
+                    <% 
+                        /* Logic chọn nguồn video:
+                           - Nếu là TV Show: Tìm episode dựa trên query param season/episode, hoặc fallback về tập đầu tiên
+                           - Nếu là Movie: Dùng movie.video
+                           - Fallback: Video demo
+                        */
+                        let videoSrc = '/images/blog-app/video1.mp4'; // Default fallback
+                        let currentTitle = movie.title || movie.name;
+                        let currentSubtitle = '';
+
+                        // Check query params first (passed as currentSeason, currentEpisode)
+                        let querySeason = typeof currentSeason !== 'undefined' && currentSeason ? parseInt(currentSeason) : null;
+                        let queryEpisode = typeof currentEpisode !== 'undefined' && currentEpisode ? parseInt(currentEpisode) : null;
+                        let isTrailerMode = typeof isTrailer !== 'undefined' && isTrailer;
+
+                        if (!isTrailerMode && movie.media_type === 'tv' && typeof seasons !== 'undefined' && seasons.length > 0) {
+                            seasons.sort((a, b) => a.season_number - b.season_number);
+                            
+                            let targetSeason = null;
+                            let targetEpisode = null;
+
+                            if (querySeason && queryEpisode) {
+                                targetSeason = seasons.find(s => s.season_number === querySeason);
+                                if (targetSeason) {
+                                    targetEpisode = targetSeason.episodes.find(e => e.episode_number === queryEpisode);
+                                }
+                            }
+
+                            // If not found by query, fallback to first episode of first season
+                            if (!targetEpisode) {
+                                targetSeason = seasons.find(s => s.episodes && s.episodes.length > 0);
+                                if (targetSeason) {
+                                     targetSeason.episodes.sort((a, b) => a.episode_number - b.episode_number);
+                                     targetEpisode = targetSeason.episodes[0];
+                                }
+                            }
+
+                            if (targetEpisode) {
+                                if (targetEpisode.video_url && (targetEpisode.video_url.startsWith('http') || targetEpisode.video_url.startsWith('/'))) {
+                                    videoSrc = targetEpisode.video_url;
+                                }
+                                currentSubtitle = `Season ${targetSeason.season_number} - Tập ${targetEpisode.episode_number}: ${targetEpisode.name || ''}`;
+                            }
+                        } else {
+                            if (movie.video && (movie.video.startsWith('http') || movie.video.startsWith('/'))) {
+                                videoSrc = movie.video;
+                            }
+                        }
+
+                        // Helper to extract YouTube ID
+                        function getYouTubeId(url) {
+                            var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                            var match = url.match(regExp);
+                            if (match && match[2].length == 11) {
+                                return match[2];
+                            } else {
+                                return null;
+                            }
+                        }
+
+                        let youtubeId = getYouTubeId(videoSrc);
+                    %>
+                    <% if (youtubeId) { %>
+                        <iframe 
+                            class="w-full h-full object-contain"
+                            src="https://www.youtube.com/embed/<%= youtubeId %>?autoplay=1&rel=0" 
+                            title="YouTube video player" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            referrerpolicy="strict-origin-when-cross-origin" 
+                            allowfullscreen>
+                        </iframe>
+                    <% } else { %>
+                    <video controls autoplay class="w-full h-full object-contain">
+                        <source src="<%= videoSrc %>" type="video/mp4">
+                        Trình duyệt của bạn không hỗ trợ thẻ video.
+                    </video>
+                    <% } %>
+                </div>
+                
+                <div class="mt-6 mb-8">
+                    <h1 class="text-3xl md:text-4xl font-bold text-white leading-tight">
+                        <%= currentTitle %>
+                    </h1>
+                    <% if (currentSubtitle) { %>
+                        <p class="text-xl text-accent-blue mt-2 font-medium flex items-center gap-2">
+                            <span class="material-icons-round">play_circle_filled</span>
+                            <%= currentSubtitle %>
+                        </p>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                    <span class="material-icons-round text-6xl text-gray-500 mb-4">error_outline</span>
+                    <h2 class="text-2xl font-bold text-white mb-2">Không tìm thấy phim</h2>
+                    <a href="/home" class="text-accent-blue hover:underline">Quay lại trang chủ</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Content Section (Tabs, Reviews, Sidebar) copied from moviedetail.ejs -->
+    <div class="max-w-7xl mx-auto px-6 mb-24 relative z-10">
+        <div class="border-b border-white/10 mb-8 relative">
+            <div class="flex gap-8 overflow-x-auto hide-scroll">
+                <button id="btn-overview" onclick="switchTab('overview')" 
+                    class="tab-btn pb-4 text-lg <%= activeTab === 'overview' ? 'font-semibold border-b-2 border-brand-red text-white' : 'font-medium text-gray-500 hover:text-white transition-colors relative group' %>">
+                    Tổng quan
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full <%= activeTab === 'overview' ? 'hidden' : '' %>"></span>
+                </button>
+                <button id="btn-episodes" onclick="switchTab('episodes')"
+                    class="tab-btn pb-4 text-lg <%= activeTab === 'episodes' ? 'font-semibold border-b-2 border-brand-red text-white' : 'font-medium text-gray-500 hover:text-white transition-colors relative group' %>">
+                    Tập phim
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full <%= activeTab === 'episodes' ? 'hidden' : '' %>"></span>
+                </button>
+                <button id="btn-actors" onclick="switchTab('actors')"
+                    class="tab-btn pb-4 text-lg font-medium text-gray-500 hover:text-white transition-colors relative group">
+                    Diễn viên &amp; Tổ sản xuất
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full"></span>
+                </button>
+
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-8 min-h-[500px]">
+                <!-- Overview Tab -->
+                <div id="tab-overview" class="tab-content <%= activeTab === 'overview' ? 'flex flex-col gap-12' : 'hidden' %>">
+                    <section>
+                        <h3 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+                            <span class="w-1 h-6 bg-brand-red rounded-full"></span>
+                            Tổng quan
+                        </h3>
+                        <div class="glass-panel p-6 rounded-2xl border-white/5">
+                            <p class="text-gray-400 leading-loose text-lg">
+                                <%= (movie && movie.overview) || 'Chưa có mô tả.' %>
+                            </p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Episodes Tab -->
+                <div id="tab-episodes" class="tab-content <%= activeTab === 'episodes' ? '' : 'hidden' %>">
+                    <section>
+                        <h3 class="text-2xl font-bold mb-6 text-white flex items-center gap-2">
+                            <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+                            Danh sách tập phim
+                        </h3>
+                        <% if (movie && movie.media_type === 'tv' && typeof seasons !== 'undefined' && seasons.length > 0) { %>
+                            <div class="mb-6">
+                                <div class="relative inline-block">
+                                    <select id="season-select" onchange="changeSeason(this.value)" class="appearance-none bg-brand-surface border border-white/10 text-white rounded-lg px-6 py-3 pr-12 font-bold cursor-pointer hover:border-brand-red transition-colors focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                        <% seasons.sort((a,b) => a.season_number - b.season_number).forEach((season, index) => { %>
+                                            <option value="<%= season.season_number %>" <%= (typeof currentSeason !== 'undefined' && season.season_number == currentSeason) ? 'selected' : '' %>>Phần <%= season.season_number %></option>
+                                        <% }); %>
+                                    </select>
+                                    <span class="material-icons-round absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                            </div>
+
+                            <% seasons.forEach((season, index) => { %>
+                                <% 
+                                    // Determine visibility: if currentSeason is set, show that season. Else show first season.
+                                    let isVisible = (typeof currentSeason !== 'undefined' && currentSeason) 
+                                        ? (season.season_number == currentSeason) 
+                                        : (index === 0);
+                                %>
+                                <div id="season-<%= season.season_number %>" class="season-content <%= isVisible ? '' : 'hidden' %>">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                        <% if (season.episodes && season.episodes.length > 0) { %>
+                                            <% season.episodes.sort((a,b) => a.episode_number - b.episode_number).forEach(episode => { %>
+                                                <%
+                                                    let isCurrentEp = (typeof currentSeason !== 'undefined' && typeof currentEpisode !== 'undefined')
+                                                        && (season.season_number == currentSeason && episode.episode_number == currentEpisode);
+                                                %>
+                                                <a href="/movie/watch?id=<%= movie._id %>&season=<%= season.season_number %>&episode=<%= episode.episode_number %>" 
+                                                   class="flex items-center gap-3 p-4 border border-white/10 rounded-xl transition-all hover:scale-105 group <%= isCurrentEp ? 'bg-brand-red text-white' : 'bg-white/5 hover:bg-white/10' %>">
+                                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold <%= isCurrentEp ? 'bg-white text-brand-red' : 'bg-white/10 text-white group-hover:bg-brand-red' %> transition-colors">
+                                                        <%= episode.episode_number %>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium truncate <%= isCurrentEp ? 'text-white' : 'text-gray-300 group-hover:text-white' %>">
+                                                            <%= episode.name || 'Tập ' + episode.episode_number %>
+                                                        </p>
+                                                    </div>
+                                                    <span class="material-icons-round text-lg <%= isCurrentEp ? 'text-white' : 'text-gray-500 group-hover:text-white' %>">play_circle</span>
+                                                </a>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <p class="text-gray-400 col-span-full italic">Chưa có thông tin tập phim.</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="glass-panel p-8 rounded-2xl border-white/5 text-center">
+                                <span class="material-icons-round text-4xl text-gray-600 mb-2">movie_filter</span>
+                                <p class="text-gray-400">Phim này không có danh sách tập phim.</p>
+                            </div>
+                        <% } %>
+                    </section>
+                </div>
+
+                <!-- Actors Tab -->
+                <div id="tab-actors" class="tab-content hidden">
+                    <section>
+                        <div class="flex justify-between items-end mb-6">
+                            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                                <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+                                Danh sách diễn viên
+                            </h3>
+                             <% if (movie && movie.acting && movie.acting.length > 0) { %>
+                                <a class="text-sm font-semibold text-accent-blue hover:text-white transition-colors flex items-center gap-1 cursor-pointer" onclick="openActorsModal()">
+                                    Xem tất cả <span class="material-icons-round text-base">arrow_forward</span>
+                                </a>
+                            <% } %>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                             <% if (movie && movie.acting && movie.acting.length > 0) { %>
+                                <% movie.acting.forEach(function(actor) { %>
+                                    <% 
+                                        const profileUrl = actor.profile_path 
+                                            ? (String(actor.profile_path).startsWith('http') 
+                                                ? actor.profile_path 
+                                                : ('https://image.tmdb.org/t/p/w185' + actor.profile_path)) 
+                                            : 'https://via.placeholder.com/150x150?text=No+Img';
+                                    %>
+                                    <div class="flex flex-col items-center gap-3 group cursor-pointer bg-white/5 p-4 rounded-xl border border-white/5 hover:border-brand-red/50 transition-all">
+                                        <div class="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-brand-red to-purple-600">
+                                            <img alt="<%= actor.name %>"
+                                                class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                                                src="<%= profileUrl %>" 
+                                                onerror="this.src='https://via.placeholder.com/150x150?text=No+Img'" />
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="font-bold text-sm text-white group-hover:text-brand-red transition-colors">
+                                                <%= actor.name %>
+                                            </p>
+                                            <p class="text-xs text-gray-500"><%= actor.character || 'Actor' %></p>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-gray-400 italic pl-2 col-span-full">Đang cập nhật danh sách diễn viên...</div>
+                            <% } %>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Reviews Section -->
+                <div class="mt-12 border-t border-white/10 pt-12">
+                    <section>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <span class="w-1 h-6 bg-accent-purple rounded-full"></span>
+                            Đánh giá
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-500">Sắp xếp theo:</span>
+                            <div class="relative">
+                                <select
+                                    class="appearance-none bg-brand-surface border border-white/10 rounded-lg pl-3 pr-8 py-1 text-sm font-bold text-white focus:ring-1 focus:ring-accent-purple cursor-pointer">
+                                    <option>Được đánh giá cao</option>
+                                    <option>Mới nhất</option>
+                                </select>
+                                <span
+                                    class="material-icons-round absolute right-2 top-1.5 text-gray-400 text-sm pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-panel rounded-2xl p-6 mb-8 border-white/5">
+                        <div class="flex gap-4">
+                            <img alt="Current user avatar"
+                                class="w-12 h-12 rounded-full object-cover border border-white/10"
+                                data-alt="Current user avatar"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1r9S47ox2r0ueq9FHaGgN-g4BP7CiHj5YnDd2gcxpPZi2AECrPJ9aEhczs_11BGXdLh_SFXfFbTv9mFFlADdghXXJCEyu0_2KzpVaqsboJxiunjkKym3jk-CN2DkAzrDR-T9eYxYj8sqkmLQHKD3agqLDV0KBqW3xUfBY8RsXsCwNytsDhXzTXrmanmt_hz_zx-OB8P0ZIiGOS4C00kNyy5DpHYLAwVFBvClKalJn0-5rssICngaZT86ef6thYC-UIytTLGtsLzw" />
+                            <div class="flex-1">
+                                <div class="flex items-center gap-1 mb-2">
+                                    <span class="text-sm text-gray-500 mr-2">Đánh giá phim:</span>
+                                    <span
+                                        class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                                    <span
+                                        class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                                    <span
+                                        class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                                    <span
+                                        class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                                    <span
+                                        class="material-icons-round text-gray-600 hover:text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                                </div>
+                                <textarea
+                                    class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-accent-purple focus:border-accent-purple outline-none resize-none transition-all"
+                                    placeholder="Chia sẻ cảm nhận của bạn..." rows="3"></textarea>
+                                <div class="flex justify-end mt-3">
+                                    <button
+                                        class="px-6 py-2 bg-white text-black font-bold rounded-full text-sm hover:bg-gray-200 transition-colors shadow-lg shadow-white/10">
+                                        Đăng đánh giá
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-6">
+                        <div class="border-b border-white/5 pb-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-3">
+                                    <img alt="Reviewer avatar woman"
+                                        class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                                        data-alt="Reviewer avatar woman"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUtFJgAlz6X1edYEa7w4N7rASgVpbo_vqpKRJeFbIPV4avNsE_rMWlpF3XdSBjnghtmpZ92jgRtx03Z2PmvPULaqYmUrvJLmOu4SpaKDE7YCKNqPiOh5ndcpt7RL90ErvVGVwrkW4h34YGql--SAMsk7VXepqXgj9N6GSbwUXPWPkhUiCYRmRSX0v9vu2QPbgRmvi2kHm1UbEKYw3epPmXrW_5hi3HVXFINjRwRpjwvD4ZRPCpDWQGZhDfwfoNAodhYKGo9Tg3Rek" />
+                                    <div>
+                                        <p class="font-bold text-white text-sm">Sarah Jenkins</p>
+                                        <p class="text-xs text-gray-500">2 days ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex text-accent-gold text-sm shadow-glow-gold">
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm leading-relaxed pl-14">
+                                Absolutely stunning visuals. The way they portrayed the digital realm was unlike
+                                anything I've seen since the original Blade Runner. Oscar Isaac delivers a nuanced
+                                performance. A must-watch in 4K!
+                            </p>
+                            <div class="flex items-center gap-4 mt-3 pl-14">
+                                <button
+                                    class="flex items-center gap-1 text-xs text-gray-500 hover:text-accent-blue transition-colors">
+                                    <span class="material-icons-round text-base">thumb_up</span> 242
+                                </button>
+                                <button
+                                    class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors">
+                                    <span class="material-icons-round text-base">reply</span> Phản hồi
+                                </button>
+                            </div>
+                        </div>
+                        <div class="border-b border-white/5 pb-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-3">
+                                    <img alt="Reviewer avatar man"
+                                        class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                                        data-alt="Reviewer avatar man"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjjIapkuc1hhkycrQDYuyM7VKvnhXqALNpdgeZNxLYb2ItlL_aBJxG3S0VVDkoWFpu-63hEMuXY0Mzjcd-qfkGkvkqJEkSeoDbDgtqQZUWaaxSsoF8y5KhRHhjdKpIHc5bq8GtvKuyluK6viMoLI-ITavHNHx5Evd0-rEE8jl78l3e6BjBbqI17UpMGD-oWPzNXoZXWT-htKi6q9_veMjoG1MVYAuiq581DUphDfAzsIOJ69z6IoJQx7za8Qe3Xex4BOOXMRe6I_Q" />
+                                    <div>
+                                        <p class="font-bold text-white text-sm">Marcus Chen</p>
+                                        <p class="text-xs text-gray-500">1 week ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex text-accent-gold text-sm">
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star</span>
+                                    <span class="material-icons-round">star_half</span>
+                                    <span class="material-icons-round text-gray-700">star</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm leading-relaxed pl-14">
+                                Good story, but the pacing in the second act was a bit slow. However, the final plot
+                                twist totally redeemed it. The soundtrack is fire 🔥
+                            </p>
+                            <div class="flex items-center gap-4 mt-3 pl-14">
+                                <button
+                                    class="flex items-center gap-1 text-xs text-gray-500 hover:text-accent-blue transition-colors">
+                                    <span class="material-icons-round text-base">thumb_up</span> 89
+                                </button>
+                                <button
+                                    class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors">
+                                    <span class="material-icons-round text-base">reply</span> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    </section>
+                </div>
+            </div>
+            <div class="lg:col-span-4 flex flex-col gap-8">
+                <div class="glass-panel p-6 rounded-2xl border-white/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-brand-red/10 blur-[50px] pointer-events-none"></div>
+                    <h4 class="font-bold text-white mb-6 border-b border-white/10 pb-2">Thông tin phim</h4>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Đạo diễn</span>
+                            <span
+                                class="font-medium text-white hover:text-accent-blue transition-colors cursor-pointer text-right">
+                                <% if (movie && movie.directing && movie.directing.length > 0) { %>
+                                    <%= movie.directing.slice(0, 3).map(d => d.name).join(', ') %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Biên kịch</span>
+                            <span
+                                class="font-medium text-white text-right hover:text-accent-blue transition-colors cursor-pointer">
+                                <% if (movie && movie.writing && movie.writing.length > 0) { %>
+                                    <%= movie.writing.slice(0, 3).map(w => w.name).join(', ') %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Ngày phát hành</span>
+                            <span class="font-medium text-white">
+                                <%= (movie && movie.release_date) || (movie && movie.first_air_date) || 'N/A' %>
+                            </span>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="material-icons-round text-accent-blue">recommend</span>
+                        Tương tự
+                    </h4>
+                    <div class="flex flex-col gap-4">
+                        <% if (typeof similarMovies !== 'undefined' && similarMovies.length > 0) { %>
+                            <% similarMovies.forEach(function(simMovie) { %>
+                                <a href="/movie/detail?id=<%= simMovie._id %>"
+                                    class="flex gap-4 group cursor-pointer bg-white/5 p-2 rounded-xl hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+                                    <div class="w-24 h-16 rounded-lg overflow-hidden relative shadow-lg flex-shrink-0">
+                                        <% 
+                                            const posterUrl = simMovie.poster_path 
+                                                ? (simMovie.poster_path.startsWith('http') ? simMovie.poster_path : 'https://image.tmdb.org/t/p/w154' + simMovie.poster_path)
+                                                : 'https://via.placeholder.com/92x138?text=No+Image';
+                                        %>
+                                        <img alt="<%= simMovie.title || simMovie.name %>"
+                                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            src="<%= posterUrl %>" />
+                                    </div>
+                                    <div class="flex-1 flex flex-col justify-center min-w-0">
+                                        <h5 class="font-bold text-white text-sm group-hover:text-accent-blue transition-colors truncate">
+                                            <%= simMovie.title || simMovie.name %>
+                                        </h5>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-xs text-gray-500"><%= (simMovie.release_date || simMovie.first_air_date || '').substring(0, 4) %></span>
+                                            <span
+                                                class="text-[10px] px-1.5 py-0.5 bg-brand-surface border border-white/10 rounded text-gray-400 truncate max-w-[100px]">
+                                                <%= simMovie.genres && simMovie.genres.length > 0 ? simMovie.genres[0].name : (simMovie.media_type === 'tv' ? 'TV Show' : 'Movie') %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-gray-500 text-sm">Đang cập nhật...</div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <%- include('partical/footer'); %>
+
+    <!-- Actors Modal -->
+    <div id="actorsModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-black/90 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeActorsModal()"></div>
+
+            <!-- Modal panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-brand-dark rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full border border-white/10 relative">
+                
+                <!-- Header -->
+                <div class="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+                        Danh sách diễn viên
+                    </h3>
+                    <button type="button" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full" onclick="closeActorsModal()">
+                        <span class="material-icons-round text-2xl">close</span>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="px-6 py-8 max-h-[70vh] overflow-y-auto custom-scrollbar bg-brand-dark">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-8 gap-x-6">
+                        <% if (movie && movie.acting && movie.acting.length > 0) { %>
+                            <% movie.acting.forEach(function(actor) { %>
+                                <% 
+                                    const profileUrl = actor.profile_path 
+                                        ? (String(actor.profile_path).startsWith('http') 
+                                            ? actor.profile_path 
+                                            : ('https://image.tmdb.org/t/p/w185' + actor.profile_path)) 
+                                        : 'https://via.placeholder.com/150x150?text=No+Img';
+                                %>
+                                <div class="flex flex-col items-center gap-4 group">
+                                    <div class="relative w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-brand-red to-purple-600 shadow-lg group-hover:shadow-brand-red/50 transition-all duration-300">
+                                        <img alt="<%= actor.name %>"
+                                            class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                                            src="<%= profileUrl %>" 
+                                            onerror="this.src='https://via.placeholder.com/150x150?text=No+Img'" />
+                                    </div>
+                                    <div class="text-center w-full">
+                                        <p class="font-bold text-base text-white group-hover:text-brand-red transition-colors truncate px-2">
+                                            <%= actor.name %>
+                                        </p>
+                                        <p class="text-sm text-gray-500 truncate px-2"><%= actor.character || 'Actor' %></p>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="col-span-full text-center py-12">
+                                <span class="material-icons-round text-6xl text-gray-600 mb-4">person_off</span>
+                                <p class="text-gray-400 text-lg">Chưa có thông tin diễn viên.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Show selected tab content
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            // Reset all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-b-2', 'border-brand-red', 'text-white', 'font-semibold');
+                btn.classList.add('text-gray-500', 'font-medium', 'relative', 'group');
+                const span = btn.querySelector('span');
+                if(span) span.style.display = 'block';
+            });
+
+            // Activate selected tab button
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-gray-500', 'font-medium', 'relative', 'group');
+            activeBtn.classList.add('border-b-2', 'border-brand-red', 'text-white', 'font-semibold');
+            const activeSpan = activeBtn.querySelector('span');
+            if(activeSpan) activeSpan.style.display = 'none';
+        }
+
+        function changeSeason(seasonNumber) {
+            // Hide all season lists
+            document.querySelectorAll('.season-content').forEach(el => el.classList.add('hidden'));
+            // Show selected season list
+            document.getElementById('season-' + seasonNumber).classList.remove('hidden');
+        }
+
+        function openActorsModal() {
+            const modal = document.getElementById('actorsModal');
+            modal.classList.remove('hidden');
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeActorsModal() {
+            const modal = document.getElementById('actorsModal');
+            modal.classList.add('hidden');
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeActorsModal();
+            }
+        });
+    </script>
+</body>
+</html>

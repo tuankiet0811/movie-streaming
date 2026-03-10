@@ -1,0 +1,24 @@
+<header class="h-24 flex items-center justify-between px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-xl z-10 sticky top-0">
+    <div class="flex-1 max-w-lg">
+        <!-- Search removed as requested -->
+    </div>
+    <div class="flex items-center gap-5">
+        <div class="flex items-center gap-4 pl-5 border-l border-border-dark">
+            <div class="text-right hidden sm:block">
+                <% 
+                    let userName = 'Quản trị viên';
+                    let firstLetter = 'Q';
+                    if (typeof user !== 'undefined' && user.name) {
+                        userName = user.name;
+                        firstLetter = userName.charAt(0).toUpperCase();
+                    }
+                %>
+                <p class="text-sm font-semibold text-white"><%= userName %></p>
+                <p class="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Quản trị viên cấp cao</p>
+            </div>
+            <div class="size-11 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl ring-2 ring-white/10 ring-offset-2 ring-offset-background-dark">
+                <%= firstLetter %>
+            </div>
+        </div>
+    </div>
+</header>

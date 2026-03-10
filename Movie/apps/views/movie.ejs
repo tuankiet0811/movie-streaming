@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <%- include('partical/header'); %>
+  <title><%= title || 'Danh sách phim' %> - StreamLine</title>
+</head>
+
+<body
+  class="bg-brand-dark text-gray-200 font-display min-h-screen selection:bg-brand-red selection:text-white overflow-x-hidden">
+  <%- include('partical/menu'); %>
+  <main class="w-full px-4 sm:px-6 lg:px-10 pt-24 pb-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-baseline gap-4 mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-white">Danh sách phim</h1>
+        <div class="h-px w-12 bg-primary/50 self-center hidden sm:block"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+        <% if (Array.isArray(items) && items.length) { %>
+          <% items.forEach(function(item){ %>
+            <div class="group relative rounded-xl overflow-hidden bg-surface border border-white/5 hover:border-white/20 transition-all shadow-2xl">
+              <a href="/movie/detail?id=<%= item._id %>" class="block">
+                <div class="aspect-[2/3] relative overflow-hidden">
+                  <% 
+                    const posterUrl = item.poster_path ? (item.poster_path.startsWith('http') ? item.poster_path : 'https://image.tmdb.org/t/p/w500' + item.poster_path) : 'https://via.placeholder.com/300x450?text=No+Poster';
+                  %>
+                  <img src="<%= posterUrl %>" alt="<%= item.title %>" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+              </a>
+              <div class="p-3">
+                <h3 class="text-sm font-bold truncate group-hover:text-primary transition-colors" title="<%= item.title %>"><%= item.title %></h3>
+                <div class="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-1">
+                  <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/5 text-gray-300"><%= item.adult ? '18+' : '13+' %></span>
+                  <% 
+                    var gName = '';
+                    if (item.genre_ids && item.genre_ids.length > 0 && typeof allGenres !== 'undefined') {
+                      var g = allGenres.find(gg => gg._id.toString() === item.genre_ids[0].toString());
+                      gName = g ? g.Name : '';
+                    }
+                  %>
+                  <span class="truncate max-w-[100px]"><%= gName %></span>
+                  <span class="text-primary">•</span>
+                  <span class="text-yellow-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> <% 
+                    var rs = (typeof ratingStatsMap !== 'undefined' && ratingStatsMap && ratingStatsMap[item._id]) ? ratingStatsMap[item._id] : null;
+                    var uAvg = rs ? Number(rs.average) : null;
+                    var tAvg = item.vote_average ? Number(item.vote_average) : null;
+                    var comb = null;
+                    if (uAvg != null && tAvg != null) comb = (uAvg + tAvg)/2;
+                    else if (uAvg != null) comb = uAvg;
+                    else if (tAvg != null) comb = tAvg;
+                  %><%= comb != null ? comb.toFixed(1) : 'N/A' %></span>
+                  <span class="text-primary">•</span>
+                  <span class="text-gray-300"><%= item.release_date ? new Date(item.release_date).getFullYear() : '' %></span>
+                </div>
+                <a href="/movie/detail?id=<%= item._id %>" class="mt-3 w-full inline-flex items-center justify-center h-9 rounded-lg bg-primary/90 text-white text-xs font-bold hover:bg-primary transition-colors">
+                  Xem chi tiết
+                </a>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="col-span-full text-center py-12 text-gray-400">
+            <span class="material-symbols-outlined text-6xl mb-4">movie_off</span>
+            <p>Chưa có phim nào được cập nhật.</p>
+          </div>
+        <% } %>
+      </div>
+      <% if (totalPages > 1) { %>
+      <div class="mt-12 flex justify-center gap-2">
+        <% for(let i = 1; i <= totalPages; i++) { %>
+          <a href="/movie?page=<%= i %>" class="px-4 py-2 rounded-lg <%= currentPage == i ? 'bg-primary text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20' %> transition-colors">
+            <%= i %>
+          </a>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+  </main>
+  <% if(false) { %><div class="max-w-7xl mx-auto px-6 mt-8 mb-24 relative z-10">
+    <div class="border-b border-white/10 mb-8 relative">
+      <div class="flex gap-8 overflow-x-auto hide-scroll">
+        <button class="pb-4 text-lg font-semibold border-b-2 border-brand-red text-white">
+          Overview
+        </button>
+        <button class="pb-4 text-lg font-medium text-gray-500 hover:text-white transition-colors relative group">
+          Episodes
+          <span
+            class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full"></span>
+        </button>
+        <button class="pb-4 text-lg font-medium text-gray-500 hover:text-white transition-colors relative group">
+          Cast &amp; Crew
+          <span
+            class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full"></span>
+        </button>
+        <button class="pb-4 text-lg font-medium text-gray-500 hover:text-white transition-colors relative group">
+          Reviews <span
+            class="text-xs bg-brand-surface border border-white/10 text-accent-blue px-2 py-0.5 rounded-full ml-1">128</span>
+          <span
+            class="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-blue transition-all duration-300 group-hover:w-full"></span>
+        </button>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div class="lg:col-span-8 flex flex-col gap-12">
+        <section>
+          <h3 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+            <span class="w-1 h-6 bg-brand-red rounded-full"></span>
+            Storyline
+          </h3>
+          <div class="glass-panel p-6 rounded-2xl border-white/5">
+            <p class="text-gray-400 leading-loose text-lg">
+              The year is 2084. Earth's atmosphere is toxic, and humanity survives in dome cities controlled by the
+              monolithic Zenith Corp. Kael (Oscar Isaac), a former memory architect turned private eye, stumbles upon a
+              glitch in the city's neural network. What starts as a simple data retrieval job spirals into a hunt for
+              "The Architect," a mythical figure who allegedly holds the encryption keys to the old world's
+              history—history that Zenith Corp has erased.
+              <br /><br />
+              As Kael peels back the layers of digital fabrication, he realizes his own memories might not be his own.
+              With the help of a rebel hacker, Lyra, he must navigate the neon-soaked underworld and the sterile
+              corporate spires to unlock the truth before his mind is wiped permanently.
+            </p>
+          </div>
+        </section>
+        <section>
+          <div class="flex justify-between items-end mb-6">
+            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+              <span class="w-1 h-6 bg-accent-blue rounded-full"></span>
+              Top Cast
+            </h3>
+            <a class="text-sm font-semibold text-accent-blue hover:text-white transition-colors flex items-center gap-1"
+              href="#">
+              See All <span class="material-icons-round text-base">arrow_forward</span>
+            </a>
+          </div>
+          <div class="flex gap-6 overflow-x-auto hide-scroll pb-4">
+            <div class="flex flex-col items-center min-w-[120px] gap-3 group cursor-pointer">
+              <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-brand-red to-purple-600">
+                <img alt="Actor portrait of male lead"
+                  class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                  data-alt="Actor portrait of male lead"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHgIrdShuwOcyKM3aqBEKOcwsHrpoMA7cTvt6nf8wi_t-4MDRQhG2Nz7G03U3NHzzrb-2lejUiZYmFujHCowsRsUJ-pkXpkN8C0GZhdYb0-xIqLrt-F27vCQ4SBOxR8480SvzNKI3rZXlbcYVXRPX5tVFvw362bYikducDW-q8qprlYqjZT5iV-dIfiCnUV3VaThXw42QTeg3WPCbyisXprtl3xhwf5MHOqsAO7P0eQBSpw9TIWEn_e9Z2B5XtY0Bi07tgOYZSuG4" />
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-sm text-white group-hover:text-brand-red transition-colors">Oscar Isaac</p>
+                <p class="text-xs text-gray-500">as Kael</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-center min-w-[120px] gap-3 group cursor-pointer">
+              <div
+                class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-brand-surface to-gray-700 hover:from-accent-blue hover:to-purple-500 transition-colors">
+                <img alt="Actress portrait of female lead"
+                  class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                  data-alt="Actress portrait of female lead"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjti7gyof68AtmSqkBma5yUyv6snAONmv6XqoGSUdMzpMVbhNySNDBeTYLjRUwRDmQAa85-jhdlWkr8J37C4XFIhoiUwdb9270sGbCyEZHGzW88OdYB5FP-4DSjgJlajgA_DGc516aVfp9ErKvh_zBSbJE3kLjNAlRbz3JF1EBe1wvLPD3aPhbKTXm4wZX2HQDyrTZQf1D6hZCvt_vtrXQ4SVvhAoIbfK9dgtPQWzueyrw4oJY7R56wyn8NUR5OIb6MN5K9uMo-ho" />
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-sm text-white group-hover:text-accent-blue transition-colors">Zendaya</p>
+                <p class="text-xs text-gray-500">as Lyra</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-center min-w-[120px] gap-3 group cursor-pointer">
+              <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-brand-surface to-gray-700">
+                <img alt="Actor portrait supporting role"
+                  class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                  data-alt="Actor portrait supporting role"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoRI4RVGIY3OXZ7ML0yALGRkscZsm8aanaDV1ZDsVZMgDolAqPLPRwLtmMva7lUQgIdmzE2eleveVQRYyyIjBNpDlAhw9xAqRHACXuHzPrFRPrG0s1EQEyYVRmXMzwo1mgKF_eem9D0V_EIfv8PBL83Vp0O0XCvU_IotbP3pjOEWx_AD-nRrQZUxmroFyOTHObmVraMpO_YzR2t0PKTiVTEF4CGwuyrwO1rb8ZRKuZ7eQ44bfehcZUJD-zkCA4cjiFe1YdRNDGTSc" />
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-sm text-white">Josh Brolin</p>
+                <p class="text-xs text-gray-500">as Commander</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-center min-w-[120px] gap-3 group cursor-pointer">
+              <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-brand-surface to-gray-700">
+                <img alt="Actress portrait supporting role"
+                  class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                  data-alt="Actress portrait supporting role"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_AWoz_q9NHpm7yu3iBCHpuHcgMlY0Fc2LvaRJGd0Hno8qIPesEe4Qwq7hIrdAe28G4_GFTHX389h4nj6Qx6fSrj4fTJ8sTK95H2K2_TuoKN79LiS8gCJ1RV1RoKYDWPgkUiXiorqf8mDrlwe-SXqrxgM-oeol_a3t-ZD2cBjoI726Xt6bLbfn40ouLlsuRMURg2xPR4OG52VyIYGNHwQYvm_2TbYC5Pabm2ZmPfzuqIcLCA3UWVKSWffBQF-lqUDrFU9Nn2Rh3cg" />
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-sm text-white">Ana de Armas</p>
+                <p class="text-xs text-gray-500">as Joi</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-center min-w-[120px] gap-3 group cursor-pointer">
+              <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-brand-surface to-gray-700">
+                <img alt="Actor portrait villain"
+                  class="w-full h-full rounded-full object-cover border-4 border-brand-dark group-hover:scale-105 transition-transform duration-300"
+                  data-alt="Actor portrait villain"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCofo8G3E3xINLKihjo7ryLichBcgayP67UT8IbTWFxWPduYV584KRhiMifCvoRVsiZPq1qB8bHF5MGTVJtEEni-lsF7jCDjlKCq3x_GQ8LIPPiXoJyOEbR3698L8aXOykpnBCNSQ01l11n27QskJUI97grKtogAae4ikUGwQ6-qTP2A904kudDMIoN40kNOysI5RbDe7BVAtz6UlSUsYbcPZRVJXXfz1iJArpdeqZjz86LmQnnwbDHQLJGrPMcaTH5SdEztToz0_0" />
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-sm text-white">Rami Malek</p>
+                <p class="text-xs text-gray-500">as The Glitch</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+              <span class="w-1 h-6 bg-accent-purple rounded-full"></span>
+              Reviews
+            </h3>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-500">Sort by:</span>
+              <div class="relative">
+                <select
+                  class="appearance-none bg-brand-surface border border-white/10 rounded-lg pl-3 pr-8 py-1 text-sm font-bold text-white focus:ring-1 focus:ring-accent-purple cursor-pointer">
+                  <option>Top Rated</option>
+                  <option>Newest</option>
+                </select>
+                <span
+                  class="material-icons-round absolute right-2 top-1.5 text-gray-400 text-sm pointer-events-none">expand_more</span>
+              </div>
+            </div>
+          </div>
+          <div class="glass-panel rounded-2xl p-6 mb-8 border-white/5">
+            <div class="flex gap-4">
+              <img alt="Current user avatar" class="w-12 h-12 rounded-full object-cover border border-white/10"
+                data-alt="Current user avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1r9S47ox2r0ueq9FHaGgN-g4BP7CiHj5YnDd2gcxpPZi2AECrPJ9aEhczs_11BGXdLh_SFXfFbTv9mFFlADdghXXJCEyu0_2KzpVaqsboJxiunjkKym3jk-CN2DkAzrDR-T9eYxYj8sqkmLQHKD3agqLDV0KBqW3xUfBY8RsXsCwNytsDhXzTXrmanmt_hz_zx-OB8P0ZIiGOS4C00kNyy5DpHYLAwVFBvClKalJn0-5rssICngaZT86ef6thYC-UIytTLGtsLzw" />
+              <div class="flex-1">
+                <div class="flex items-center gap-1 mb-2">
+                  <span class="text-sm text-gray-500 mr-2">Rate this movie:</span>
+                  <span
+                    class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                  <span
+                    class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                  <span
+                    class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                  <span
+                    class="material-icons-round text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                  <span
+                    class="material-icons-round text-gray-600 hover:text-accent-gold cursor-pointer hover:scale-125 transition-transform">star</span>
+                </div>
+                <textarea
+                  class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-accent-purple focus:border-accent-purple outline-none resize-none transition-all"
+                  placeholder="Share your thoughts on the movie..." rows="3"></textarea>
+                <div class="flex justify-end mt-3">
+                  <button
+                    class="px-6 py-2 bg-white text-black font-bold rounded-full text-sm hover:bg-gray-200 transition-colors shadow-lg shadow-white/10">
+                    Post Review
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-6">
+            <div class="border-b border-white/5 pb-6">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-3">
+                  <img alt="Reviewer avatar woman" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                    data-alt="Reviewer avatar woman"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUtFJgAlz6X1edYEa7w4N7rASgVpbo_vqpKRJeFbIPV4avNsE_rMWlpF3XdSBjnghtmpZ92jgRtx03Z2PmvPULaqYmUrvJLmOu4SpaKDE7YCKNqPiOh5ndcpt7RL90ErvVGVwrkW4h34YGql--SAMsk7VXepqXgj9N6GSbwUXPWPkhUiCYRmRSX0v9vu2QPbgRmvi2kHm1UbEKYw3epPmXrW_5hi3HVXFINjRwRpjwvD4ZRPCpDWQGZhDfwfoNAodhYKGo9Tg3Rek" />
+                  <div>
+                    <p class="font-bold text-white text-sm">Sarah Jenkins</p>
+                    <p class="text-xs text-gray-500">2 days ago</p>
+                  </div>
+                </div>
+                <div class="flex text-accent-gold text-sm shadow-glow-gold">
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star</span>
+                </div>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed pl-14">
+                Absolutely stunning visuals. The way they portrayed the digital realm was unlike anything I've seen
+                since the original Blade Runner. Oscar Isaac delivers a nuanced performance. A must-watch in 4K!
+              </p>
+              <div class="flex items-center gap-4 mt-3 pl-14">
+                <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-accent-blue transition-colors">
+                  <span class="material-icons-round text-base">thumb_up</span> 242
+                </button>
+                <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors">
+                  <span class="material-icons-round text-base">reply</span> Reply
+                </button>
+              </div>
+            </div>
+            <div class="border-b border-white/5 pb-6">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-3">
+                  <img alt="Reviewer avatar man" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                    data-alt="Reviewer avatar man"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjjIapkuc1hhkycrQDYuyM7VKvnhXqALNpdgeZNxLYb2ItlL_aBJxG3S0VVDkoWFpu-63hEMuXY0Mzjcd-qfkGkvkqJEkSeoDbDgtqQZUWaaxSsoF8y5KhRHhjdKpIHc5bq8GtvKuyluK6viMoLI-ITavHNHx5Evd0-rEE8jl78l3e6BjBbqI17UpMGD-oWPzNXoZXWT-htKi6q9_veMjoG1MVYAuiq581DUphDfAzsIOJ69z6IoJQx7za8Qe3Xex4BOOXMRe6I_Q" />
+                  <div>
+                    <p class="font-bold text-white text-sm">Marcus Chen</p>
+                    <p class="text-xs text-gray-500">1 week ago</p>
+                  </div>
+                </div>
+                <div class="flex text-accent-gold text-sm">
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star</span>
+                  <span class="material-icons-round">star_half</span>
+                  <span class="material-icons-round text-gray-700">star</span>
+                </div>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed pl-14">
+                Good story, but the pacing in the second act was a bit slow. However, the final plot twist totally
+                redeemed it. The soundtrack is fire 🔥
+              </p>
+              <div class="flex items-center gap-4 mt-3 pl-14">
+                <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-accent-blue transition-colors">
+                  <span class="material-icons-round text-base">thumb_up</span> 89
+                </button>
+                <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors">
+                  <span class="material-icons-round text-base">reply</span> Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="lg:col-span-4 flex flex-col gap-8">
+        <div class="glass-panel p-6 rounded-2xl border-white/5 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-brand-red/10 blur-[50px] pointer-events-none"></div>
+          <h4 class="font-bold text-white mb-6 border-b border-white/10 pb-2">Movie Info</h4>
+          <div class="space-y-4 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Director</span>
+              <span class="font-medium text-white hover:text-accent-blue transition-colors cursor-pointer">Denis
+                Villeneuve</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Writers</span>
+              <span
+                class="font-medium text-white text-right hover:text-accent-blue transition-colors cursor-pointer">Jon
+                Spaihts, Eric Roth</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Release Date</span>
+              <span class="font-medium text-white">Oct 12, 2024</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Production</span>
+              <span class="font-medium text-white">Warner Bros</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Budget</span>
+              <span class="font-medium text-white">$165M</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+            <span class="material-icons-round text-accent-blue">recommend</span>
+            More Like This
+          </h4>
+          <div class="flex flex-col gap-4">
+            <div
+              class="flex gap-4 group cursor-pointer bg-white/5 p-2 rounded-xl hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+              <div class="w-24 h-16 rounded-lg overflow-hidden relative shadow-lg">
+                <img alt="Thumbnail for movie The Matrix Resurrected"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  data-alt="Thumbnail for movie The Matrix Resurrected"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXLJSKZgWLWjLwTL_L9z6RLqARtRH0H1MQVQidlGY2THYaJonzm1ekHvJNdRIwTfAn8T6ckc5GSBjvWurOfhMJlk0_SnFj84TgJCmVuH7jD8IVd-TjMU7s18Led6Ci7ldmgBLXjDNhN1yXcV30NT7tFLNvB5YR4iaMF76FJ2R4wmDVogoW5CTClNeJ7TJY_k2L94AAlJgj1_EZYwwp_jvy1rX88KzfsFYHeB4AnUGC3VmKTr3oaAhK4oEBO7dOJwc298qjmd2Zym0" />
+              </div>
+              <div class="flex-1 flex flex-col justify-center">
+                <h5 class="font-bold text-white text-sm group-hover:text-accent-blue transition-colors">The Matrix:
+                  Resurrected</h5>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs text-gray-500">2021</span>
+                  <span
+                    class="text-[10px] px-1.5 py-0.5 bg-brand-surface border border-white/10 rounded text-gray-400">Sci-Fi</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex gap-4 group cursor-pointer bg-white/5 p-2 rounded-xl hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+              <div class="w-24 h-16 rounded-lg overflow-hidden relative shadow-lg">
+                <img alt="Thumbnail for movie Neon Nights"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  data-alt="Thumbnail for movie Neon Nights"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnyEOuODvSELm_UamqotXTV1uFnIu2JV8dXoYokpnerXQcRBYGlEVBJTtyjBoCBAFxtbEY3p5KlEou8tRN2gF1R2AT58JEVFqACcWaB-itKtjTzJlEOVe9I95Ih1-qlx_cu7lv98zUUqmS5IXfVOFptgTXkRIFE2u_z3AmLkTMjkqOZsEdn-13-FXExkFrvfmO6eyam74y6AliVomd0IIsQovaGYcs6B6oTMguFcI6pRtw5vgTa4_0As_BvHCMLS6sBqZ6xHO5jC4" />
+              </div>
+              <div class="flex-1 flex flex-col justify-center">
+                <h5 class="font-bold text-white text-sm group-hover:text-accent-blue transition-colors">Neon Nights</h5>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs text-gray-500">2023</span>
+                  <span
+                    class="text-[10px] px-1.5 py-0.5 bg-brand-surface border border-white/10 rounded text-gray-400">Thriller</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex gap-4 group cursor-pointer bg-white/5 p-2 rounded-xl hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+              <div class="w-24 h-16 rounded-lg overflow-hidden relative shadow-lg">
+                <img alt="Thumbnail for movie Interstellar Voyage"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  data-alt="Thumbnail for movie Interstellar Voyage"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDweHIyIBS_5L1b7tk4RcISPtsqyoUWWsyYm6-QmDLxp6gRESqURquwNSyDwZkJJozaxATrODPpcR0XuFRSbh3DQ0wjoLXNF5yCRJ5dQsjT8BLEyi2DxdgQ5t8_opQlFT13RNuOscMkXS3PdISfnwSQA4aXpFd2URGzO-cc5aZQjBkk2oinyAw3YEegqzF9BBb7x59TQzJN9UQuY6bR-1TvT_4B4AAgk_0pt9cozudKAnxxKXBHK1T1fDVT2Qq_ZfbGPFSrN5Vm6dQ" />
+              </div>
+              <div class="flex-1 flex flex-col justify-center">
+                <h5 class="font-bold text-white text-sm group-hover:text-accent-blue transition-colors">Interstellar
+                  Voyage</h5>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs text-gray-500">2014</span>
+                  <span
+                    class="text-[10px] px-1.5 py-0.5 bg-brand-surface border border-white/10 rounded text-gray-400">Adventure</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="border-t border-white/10 bg-brand-navy pt-16 pb-12 relative overflow-hidden">
+    <div
+      class="absolute bottom-0 left-1/3 w-[500px] h-[500px] bg-brand-red/5 rounded-full blur-[100px] pointer-events-none">
+    </div>
+    <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
+      <div class="col-span-1 md:col-span-1">
+        <div class="flex items-center gap-2 mb-6">
+          <span class="material-icons-round text-brand-red text-3xl">movie_filter</span>
+          <span class="text-xl font-bold tracking-tight text-white">Cine<span
+              class="text-brand-red">Stream</span></span>
+        </div>
+        <p class="text-sm text-gray-500 leading-relaxed">
+          Experience the next generation of streaming. High-definition visuals, immersive sound, and a library curated
+          for the true cinephile.
+        </p>
+      </div>
+      <div>
+        <h6 class="font-bold text-white mb-6 uppercase tracking-wider text-xs">Browse</h6>
+        <ul class="space-y-3 text-sm text-gray-400">
+          <li><a class="hover:text-brand-red transition-colors flex items-center gap-2" href="#"><span
+                class="w-1 h-1 bg-gray-600 rounded-full"></span> Movies</a></li>
+          <li><a class="hover:text-brand-red transition-colors flex items-center gap-2" href="#"><span
+                class="w-1 h-1 bg-gray-600 rounded-full"></span> TV Shows</a></li>
+          <li><a class="hover:text-brand-red transition-colors flex items-center gap-2" href="#"><span
+                class="w-1 h-1 bg-gray-600 rounded-full"></span> Documentaries</a></li>
+          <li><a class="hover:text-brand-red transition-colors flex items-center gap-2" href="#"><span
+                class="w-1 h-1 bg-gray-600 rounded-full"></span> Kids</a></li>
+        </ul>
+      </div>
+      <div>
+        <h6 class="font-bold text-white mb-6 uppercase tracking-wider text-xs">Company</h6>
+        <ul class="space-y-3 text-sm text-gray-400">
+          <li><a class="hover:text-accent-blue transition-colors" href="#">About Us</a></li>
+          <li><a class="hover:text-accent-blue transition-colors" href="#">Careers</a></li>
+          <li><a class="hover:text-accent-blue transition-colors" href="#">Press</a></li>
+        </ul>
+      </div>
+      <div>
+        <h6 class="font-bold text-white mb-6 uppercase tracking-wider text-xs">Support</h6>
+        <ul class="space-y-3 text-sm text-gray-400">
+          <li><a class="hover:text-accent-blue transition-colors" href="#">Help Center</a></li>
+          <li><a class="hover:text-accent-blue transition-colors" href="#">Terms of Service</a></li>
+          <li><a class="hover:text-accent-blue transition-colors" href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div
+      class="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 relative z-10">
+      <p>© 2024 CineStream Inc. All rights reserved.</p>
+      <div class="flex gap-6 mt-4 md:mt-0">
+        <a class="hover:text-brand-red transition-colors" href="#">Facebook</a>
+        <a class="hover:text-brand-red transition-colors" href="#">Twitter</a>
+        <a class="hover:text-brand-red transition-colors" href="#">Instagram</a>
+      </div>
+    </div>
+  </footer><% } %>
+  <%- include('partical/footer'); %>
+</body>
+</html>

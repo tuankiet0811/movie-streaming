@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partials/head') %>
+</head>
+<body class="font-display bg-background-dark text-slate-200 antialiased selection:bg-primary selection:text-white overflow-hidden h-screen flex">
+    <%- include('partials/sidebar') %>
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background-dark">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-glow opacity-30 pointer-events-none z-0"></div>
+        <%- include('partials/header') %>
+        <div class="flex-1 overflow-y-auto p-8 relative z-10" id="main-content">
+            <!-- Content -->
+            <div class="max-w-[1600px] mx-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight text-white">Quản lý Phim</h2>
+                        <p class="text-gray-400 mt-1">Danh sách phim</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="openCreateModal()" class="px-6 py-2.5 rounded-full bg-gradient-primary text-white text-sm font-bold shadow-glow-primary hover:shadow-[0_0_25px_rgba(229,9,20,0.5)] hover:scale-105 transition-all active:scale-95 flex items-center gap-2">
+                            <span class="material-symbols-outlined">add</span>
+                            Thêm phim mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search & Filter -->
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="relative flex-1">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 material-symbols-outlined">search</span>
+                        <input type="text" id="searchKeyword" placeholder="Tìm kiếm phim theo tên..." 
+                            class="w-full pl-10 pr-4 py-2.5 bg-surface-dark border border-white/10 rounded-lg text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-500"
+                            onkeyup="handleSearch(event)">
+                    </div>
+                    <div class="w-full md:w-48">
+                        <select id="filterType" onchange="loadMovies(1)" 
+                            class="w-full px-4 py-2.5 bg-surface-dark border border-white/10 rounded-lg text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer">
+                            <option value="all">Tất cả loại</option>
+                            <option value="movie">Phim lẻ (Movie)</option>
+                            <option value="tv">Phim bộ (TV Show)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="glass-panel rounded-2xl overflow-hidden border border-white/5 relative z-10">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-white/5 bg-white/5">
+                                    <th class="p-4 text-sm font-semibold text-gray-300">Poster</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-300">Tên phim</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-300">Loại</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-300">Tên gốc</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-300">Ngày phát hành</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-300">Đánh giá</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-300 text-right">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="movieTableBody" class="divide-y divide-white/5">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="p-4 border-t border-white/5 flex items-center justify-between" id="paginationControls">
+                        <!-- Pagination will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="movieModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-surface-dark border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center sticky top-0 bg-surface-dark z-10">
+                    <h3 class="text-xl font-bold text-white" id="modalTitle">Thêm phim mới</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <form id="movieForm" class="space-y-6">
+                        <input type="hidden" id="movieId">
+                        <input type="hidden" id="mode" value="create">
+                        <input type="hidden" id="_id" name="_id">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left Column -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Tên phim (Title)</label>
+                                    <input type="text" id="title" name="title" required class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Tên gốc (Original Title)</label>
+                                    <input type="text" id="original_title" name="original_title" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-400 mb-1">Ngôn ngữ gốc</label>
+                                        <input type="text" id="original_language" name="original_language" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-400 mb-1">Ngày phát hành</label>
+                                        <input type="date" id="release_date" name="release_date" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Loại phim</label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="media_type" value="movie" checked class="w-4 h-4 text-primary bg-surface-dark border-white/10 focus:ring-primary">
+                                            <span class="text-sm text-gray-300">Phim lẻ (Movie)</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="media_type" value="tv" class="w-4 h-4 text-primary bg-surface-dark border-white/10 focus:ring-primary">
+                                            <span class="text-sm text-gray-300">Phim bộ (TV Show)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">TMDB ID</label>
+                                    <div class="flex gap-2">
+                                        <input type="number" id="tmdb_id" name="id" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600" placeholder="Nhập TMDB ID">
+                                        <button type="button" onclick="fetchTMDBData()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors whitespace-nowrap flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px]">cloud_download</span>
+                                            Lấy dữ liệu
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Nhập ID và nhấn nút để tự động điền thông tin</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Thể loại</label>
+                                    <div class="flex flex-wrap gap-2 p-3 bg-surface-dark border border-white/10 rounded-lg min-h-[120px] max-h-[200px] overflow-y-auto" id="genreContainer">
+                                        <% categories.forEach(function(cat) { %>
+                                            <label class="cursor-pointer group">
+                                                <input type="checkbox" name="genre_ids" value="<%= cat.tmdb_id || cat._id %>" class="peer hidden">
+                                                <span class="inline-block px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm peer-checked:bg-primary/20 peer-checked:border-primary peer-checked:text-primary transition-all hover:bg-white/10 select-none">
+                                                    <%= cat.Name %>
+                                                </span>
+                                            </label>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Poster Path</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="poster_path" name="poster_path" onchange="previewImage(this.value, 'poster_preview')" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600">
+                                    </div>
+                                    <img id="poster_preview" src="" class="mt-2 w-24 h-36 object-cover rounded-lg bg-white/5 hidden" onerror="this.classList.add('hidden')">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Backdrop Path</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="backdrop_path" name="backdrop_path" onchange="previewImage(this.value, 'backdrop_preview')" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600">
+                                    </div>
+                                    <img id="backdrop_preview" src="" class="mt-2 w-48 h-28 object-cover rounded-lg bg-white/5 hidden" onerror="this.classList.add('hidden')">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-400 mb-1">Điểm đánh giá</label>
+                                        <input type="number" step="0.1" id="vote_average" name="vote_average" readonly class="w-full bg-surface-dark/50 border border-white/5 rounded-lg py-2.5 px-4 text-gray-300 cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-400 mb-1">Lượt đánh giá</label>
+                                        <input type="number" id="vote_count" name="vote_count" readonly class="w-full bg-surface-dark/50 border border-white/5 rounded-lg py-2.5 px-4 text-gray-300 cursor-not-allowed">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Độ phổ biến (Popularity)</label>
+                                    <input type="number" step="0.001" id="popularity" name="popularity" readonly class="w-full bg-surface-dark/50 border border-white/5 rounded-lg py-2.5 px-4 text-gray-300 cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-400 mb-1">Video Trailer URL</label>
+                                    <input type="text" id="video" name="video" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600" placeholder="https://youtube.com/...">
+                                </div>
+
+                                <!-- Credits Section -->
+                                <div class="space-y-3 p-4 bg-white/5 rounded-lg border border-white/10 mt-4">
+                                    <h4 class="text-sm font-bold text-gray-300 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-blue-500 text-sm">group</span>
+                                        Diễn viên & Đoàn làm phim (Credits)
+                                    </h4>
+                                    <input type="hidden" id="acting" name="acting">
+                                    <input type="hidden" id="directing" name="directing">
+                                    <input type="hidden" id="writing" name="writing">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <div class="text-xs text-gray-500 mb-2">Acting</div>
+                                            <div id="actingList" class="space-y-2 max-h-44 overflow-y-auto"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs text-gray-500 mb-2">Directing</div>
+                                            <div id="directingList" class="space-y-2 max-h-44 overflow-y-auto"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs text-gray-500 mb-2">Writing</div>
+                                            <div id="writingList" class="space-y-2 max-h-44 overflow-y-auto"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TV Show Seasons Section -->
+                                <div id="tvShowSection" class="hidden space-y-4 mt-6 border-t border-white/10 pt-6 col-span-1 md:col-span-2">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-purple-500">movie_filter</span>
+                                            Danh sách tập phim (Seasons & Episodes)
+                                        </h3>
+                                        <button type="button" onclick="addManualSeason()" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-white transition-colors flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px]">add</span>
+                                            Thêm Season
+                                        </button>
+                                    </div>
+                                    <div id="seasonsContainer" class="space-y-4">
+                                        <!-- Seasons will be injected here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Collection Section -->
+                                <div id="collectionSection" class="hidden space-y-3 p-4 bg-white/5 rounded-lg border border-white/10 mt-4">
+                                    <h4 class="text-sm font-bold text-gray-300 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-yellow-500 text-sm">library_books</span>
+                                        Thuộc bộ sưu tập
+                                    </h4>
+                                    <div class="flex gap-4 items-start">
+                                        <img id="collection_poster" src="" class="w-16 h-24 object-cover rounded bg-surface-dark hidden border border-white/10">
+                                        <div class="flex-1 space-y-2">
+                                            <div>
+                                                <label class="block text-xs text-gray-500 mb-1">Tên bộ sưu tập</label>
+                                                <input type="text" id="collection_name" name="collection_name" readonly class="w-full bg-transparent border-none p-0 text-white font-medium text-sm focus:ring-0">
+                                                <input type="hidden" id="collection_id" name="collection_id">
+                                                <input type="hidden" id="collection_poster_path" name="collection_poster_path">
+                                                <input type="hidden" id="collection_backdrop_path" name="collection_backdrop_path">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-6 pt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="adult" name="adult" class="w-5 h-5 rounded border-white/10 bg-surface-dark text-primary focus:ring-primary focus:ring-offset-background-dark">
+                                        <span class="text-sm font-medium text-gray-300">Phim người lớn (Adult)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Mô tả (Overview)</label>
+                            <textarea id="overview" name="overview" rows="4" class="w-full bg-surface-dark border border-white/10 rounded-lg py-2.5 px-4 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder-gray-600"></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-white/10">
+                            <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-lg bg-surface-dark border border-white/10 text-gray-300 hover:bg-white/5 transition-colors font-medium">Hủy</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-lg bg-gradient-primary text-white font-bold shadow-glow-primary hover:shadow-[0_0_20px_rgba(229,9,20,0.4)] transition-all">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+        const TMDB_API_KEY = 'b55a84b0d9f2ea275d1da2c5552e1c13'; 
+        let currentPage = 1;
+        const limit = 10;
+
+        async function fetchTMDBData() {
+            const tmdbId = $('#tmdb_id').val();
+            const mediaType = $('input[name="media_type"]:checked').val();
+
+            if (!tmdbId) {
+                alert('Vui lòng nhập TMDB ID');
+                return;
+            }
+
+            // Helper to set value only if empty
+            const setIfEmpty = (selector, value) => {
+                const el = $(selector);
+                if (!el.val() && value) {
+                    el.val(value);
+                }
+            };
+
+            try {
+                // Fetch Details
+                const response = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=vi-VN`);
+                if (!response.ok) throw new Error('Không tìm thấy ' + (mediaType === 'movie' ? 'phim' : 'TV Show'));
+                const data = await response.json();
+
+                // Fill form - Use setIfEmpty for main fields
+                if (mediaType === 'movie') {
+                    setIfEmpty('#title', data.title);
+                    setIfEmpty('#original_title', data.original_title);
+                    setIfEmpty('#release_date', data.release_date);
+                } else {
+                    setIfEmpty('#title', data.name);
+                    setIfEmpty('#original_title', data.original_name);
+                    setIfEmpty('#release_date', data.first_air_date);
+                }
+                
+                setIfEmpty('#original_language', data.original_language);
+                setIfEmpty('#overview', data.overview);
+                
+                // Read-only fields (Always update these as they are statistical)
+                $('#vote_average').val(data.vote_average);
+                $('#vote_count').val(data.vote_count);
+                $('#popularity').val(data.popularity);
+                
+                setIfEmpty('#poster_path', data.poster_path);
+                if ($('#poster_path').val()) previewImage($('#poster_path').val(), 'poster_preview');
+                
+                setIfEmpty('#backdrop_path', data.backdrop_path);
+                if ($('#backdrop_path').val()) previewImage($('#backdrop_path').val(), 'backdrop_preview');
+                
+                if (data.adult) $('#adult').prop('checked', true);
+
+                // Fetch Trailer
+                // Only if trailer field is empty
+                if (!$('#trailer').val()) {
+                    const videosResponse = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}`);
+                    const videosData = await videosResponse.json();
+                    const trailer = videosData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+                    if (trailer) {
+                        $('#trailer').val(`https://www.youtube.com/watch?v=${trailer.key}`);
+                    }
+                }
+
+                // Handle Collection
+                if (mediaType === 'movie' && data.belongs_to_collection) {
+                    $('#collectionSection').removeClass('hidden');
+                    setIfEmpty('#collection_id', data.belongs_to_collection.id);
+                    setIfEmpty('#collection_name', data.belongs_to_collection.name);
+                    setIfEmpty('#collection_poster_path', data.belongs_to_collection.poster_path);
+                    setIfEmpty('#collection_backdrop_path', data.belongs_to_collection.backdrop_path);
+                    
+                    if ($('#collection_poster_path').val()) {
+                        const posterUrl = TMDB_IMAGE_BASE_URL + $('#collection_poster_path').val();
+                        $('#collection_poster').attr('src', posterUrl).removeClass('hidden');
+                    }
+                }
+
+                // Fetch Credits (Acting/Directing/Writing)
+                try {
+                    const creditsEndpoint = mediaType === 'tv' 
+                        ? `https://api.themoviedb.org/3/tv/${tmdbId}/aggregate_credits?api_key=${TMDB_API_KEY}&language=vi-VN`
+                        : `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=vi-VN`;
+                    const creditsRes = await fetch(creditsEndpoint);
+                    if (creditsRes.ok) {
+                        const credits = await creditsRes.json();
+                        
+                        // Parse new credits
+                        const newActing = (credits.cast || []).slice(0, 20).map(c => ({
+                            id: c.id,
+                            gender: c.gender,
+                            known_for_department: c.known_for_department || 'Acting',
+                            name: c.name,
+                            profile_path: c.profile_path || '',
+                            character: c.character || (Array.isArray(c.roles) && c.roles.length ? c.roles[0].character : '')
+                        }));
+                        const newDirecting = (credits.crew || []).filter(c => c.department === 'Directing').slice(0, 20).map(c => ({
+                            id: c.id,
+                            gender: c.gender,
+                            known_for_department: c.department || 'Directing',
+                            name: c.name,
+                            profile_path: c.profile_path || '',
+                            character: c.job || ''
+                        }));
+                        const newWriting = (credits.crew || []).filter(c => c.department === 'Writing').slice(0, 20).map(c => ({
+                            id: c.id,
+                            gender: c.gender,
+                            known_for_department: c.department || 'Writing',
+                            name: c.name,
+                            profile_path: c.profile_path || '',
+                            character: c.job || ''
+                        }));
+
+                        // Get existing credits
+                        let existingActing = [], existingDirecting = [], existingWriting = [];
+                        try { existingActing = JSON.parse($('#acting').val() || '[]'); } catch(e){}
+                        try { existingDirecting = JSON.parse($('#directing').val() || '[]'); } catch(e){}
+                        try { existingWriting = JSON.parse($('#writing').val() || '[]'); } catch(e){}
+
+                        // Merge function
+                        const mergeCredits = (existing, incoming) => {
+                            const map = new Map();
+                            existing.forEach(i => map.set(i.id, i));
+                            incoming.forEach(i => {
+                                if (!map.has(i.id)) map.set(i.id, i);
+                            });
+                            return Array.from(map.values());
+                        };
+
+                        renderCredits(
+                            mergeCredits(existingActing, newActing),
+                            mergeCredits(existingDirecting, newDirecting),
+                            mergeCredits(existingWriting, newWriting)
+                        );
+                    }
+                } catch(e) {
+                    console.warn('Không lấy được credits', e);
+                }
+
+                // Handle Genres - Merge
+                if (data.genres) {
+                    data.genres.forEach(g => {
+                        $(`input[name="genre_ids"][value="${g.id}"]`).prop('checked', true);
+                    });
+                }
+
+                // Handle Seasons for TV Shows
+                if (mediaType === 'tv' && data.seasons) {
+                    $('#tvShowSection').removeClass('hidden');
+                    
+                    // Check which seasons we already have
+                    const existingSeasons = new Set();
+                    $('#seasonsContainer .season-number').each(function() {
+                        existingSeasons.add(parseInt($(this).val()));
+                    });
+
+                    for (const season of data.seasons) {
+                        if (existingSeasons.has(season.season_number)) continue; // Skip existing
+
+                        try {
+                            const seasonResponse = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${season.season_number}?api_key=${TMDB_API_KEY}&language=vi-VN`);
+                            if (seasonResponse.ok) {
+                                const seasonData = await seasonResponse.json();
+                                
+                                // Fetch videos for each episode in parallel
+                                if (seasonData.episodes && seasonData.episodes.length > 0) {
+                                    const episodePromises = seasonData.episodes.map(async (episode) => {
+                                        try {
+                                            const videoRes = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${season.season_number}/episode/${episode.episode_number}/videos?api_key=${TMDB_API_KEY}`);
+                                            if (videoRes.ok) {
+                                                const videoData = await videoRes.json();
+                                                const video = videoData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser' || v.type === 'Clip'));
+                                                if (video) {
+                                                    episode.video_url = `https://www.youtube.com/watch?v=${video.key}`;
+                                                }
+                                            }
+                                        } catch (e) {}
+                                        return episode;
+                                    });
+                                    seasonData.episodes = await Promise.all(episodePromises);
+                                }
+
+                                renderSeasonItem(seasonData);
+                            } else {
+                                renderSeasonItem(season);
+                            }
+                        } catch (err) {
+                            console.error('Error fetching season details:', err);
+                            renderSeasonItem(season);
+                        }
+                    }
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert('Lỗi khi lấy dữ liệu: ' + error.message);
+            }
+        }
+
+        $(document).ready(function() {
+            loadMovies(currentPage);
+
+            $('#movieForm').on('submit', function(e) {
+                e.preventDefault();
+                saveMovie();
+            });
+        });
+
+        let searchTimeout;
+        
+        function handleSearch(event) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadMovies(1);
+            }, 500);
+        }
+
+        function loadMovies(page) {
+            const keyword = $('#searchKeyword').val() || '';
+            const type = $('#filterType').val() || 'all';
+
+            $.ajax({
+                url: `/admin/moviemanage/movie-list?page=${page}&limit=${limit}&keyword=${encodeURIComponent(keyword)}&type=${type}`,
+                type: 'GET',
+                success: function(response) {
+                    renderTable(response.data);
+                    renderPagination(response);
+                    currentPage = page;
+                },
+                error: function(err) {
+                    console.error('Error loading movies:', err);
+                    alert('Không thể tải danh sách phim');
+                }
+            });
+        }
+
+        function renderTable(movies) {
+            const tbody = $('#movieTableBody');
+            tbody.empty();
+
+            if (!movies || movies.length === 0) {
+                tbody.html('<tr><td colspan="6" class="p-8 text-center text-gray-400">Chưa có phim nào.</td></tr>');
+                return;
+            }
+
+            movies.forEach(movie => {
+                const posterUrl = movie.poster_path ? (movie.poster_path.startsWith('http') ? movie.poster_path : TMDB_IMAGE_BASE_URL + movie.poster_path) : 'https://via.placeholder.com/50x75?text=No+Img';
+                
+                const tr = `
+                    <tr class="hover:bg-white/5 transition-colors group">
+                        <td class="p-4">
+                            <div class="w-12 h-16 rounded-lg overflow-hidden bg-surface-dark border border-white/10 relative">
+                                <img src="${posterUrl}" alt="${movie.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/50x75?text=Error'">
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-medium text-white group-hover:text-primary transition-colors">${movie.title}</div>
+                        </td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${movie.media_type === 'tv' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}">
+                                ${movie.media_type === 'tv' ? 'TV Show' : 'Movie'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-gray-400 text-sm">${movie.original_title || '-'}</td>
+                        <td class="p-4 text-gray-400 text-sm">${movie.release_date || '-'}</td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-500/10 text-yellow-500 text-xs font-bold border border-yellow-500/20">
+                                <span class="material-symbols-outlined text-[14px]">star</span>
+                                ${movie.vote_average ? movie.vote_average.toFixed(1) : '0.0'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="/admin/moviemanage/detail?id=${movie._id}" class="p-2 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-gray-500 hover:text-white transition-colors" title="Xem chi tiết">
+                                     <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                 </a>
+                                <button onclick='editMovie(${JSON.stringify(movie).replace(/'/g, "&#39;")})' class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-colors" title="Sửa">
+                                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                                </button>
+                                <button onclick="deleteMovie('${movie._id}')" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors" title="Xóa">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(tr);
+            });
+        }
+
+        function renderPagination(data) {
+            const controls = $('#paginationControls');
+            controls.empty();
+
+            if (data.total === 0) return;
+
+            const startItem = (data.page - 1) * data.limit + 1;
+            const endItem = Math.min(data.page * data.limit, data.total);
+
+            controls.append(`
+                <div class="text-sm text-gray-400">
+                    Hiển thị <span class="font-medium text-white">${startItem}</span> đến <span class="font-medium text-white">${endItem}</span> trong tổng số <span class="font-medium text-white">${data.total}</span> phim
+                </div>
+            `);
+
+            let buttons = `<div class="flex gap-2">`;
+            
+            // Prev button
+            buttons += `
+                <button onclick="loadMovies(${data.page - 1})" ${data.page === 1 ? 'disabled' : ''} 
+                    class="px-3 py-1.5 rounded-lg border border-white/10 bg-surface-dark text-gray-400 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </button>
+            `;
+
+            // Page numbers (simple version)
+            for(let i = 1; i <= data.totalPages; i++) {
+                if (i === 1 || i === data.totalPages || (i >= data.page - 1 && i <= data.page + 1)) {
+                    const activeClass = i === data.page 
+                        ? 'bg-primary text-white border-primary shadow-glow-primary' 
+                        : 'bg-surface-dark text-gray-400 border-white/10 hover:bg-white/5';
+                    
+                    buttons += `
+                        <button onclick="loadMovies(${i})" class="px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${activeClass}">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === data.page - 2 || i === data.page + 2) {
+                    buttons += `<span class="px-2 py-1.5 text-gray-600">...</span>`;
+                }
+            }
+
+            // Next button
+            buttons += `
+                <button onclick="loadMovies(${data.page + 1})" ${data.page === data.totalPages ? 'disabled' : ''}
+                    class="px-3 py-1.5 rounded-lg border border-white/10 bg-surface-dark text-gray-400 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+            `;
+
+            buttons += `</div>`;
+            controls.append(buttons);
+        }
+
+        function openCreateModal() {
+            $('#movieForm')[0].reset();
+            $('#movieId').val('');
+            $('#_id').val('');
+            $('#mode').val('create');
+            $('#modalTitle').text('Thêm phim mới');
+            $('#poster_preview').addClass('hidden').attr('src', '');
+            $('#backdrop_preview').addClass('hidden').attr('src', '');
+            
+            // Reset collection section
+            $('#collectionSection').addClass('hidden');
+            $('#collection_id').val('');
+            $('#collection_name').val('');
+            $('#collection_poster_path').val('');
+            $('#collection_backdrop_path').val('');
+            
+            $('#movieModal').removeClass('hidden');
+        }
+
+        function closeModal() {
+            $('#movieModal').addClass('hidden');
+        }
+
+        window.editMovie = function(movie) {
+            $('#movieForm')[0].reset();
+            $('#modalTitle').text('Chỉnh sửa phim');
+            $('#mode').val('update');
+            $('#_id').val(movie._id);
+            
+            // Set media type
+            $(`input[name="media_type"][value="${movie.media_type || 'movie'}"]`).prop('checked', true);
+
+            // Populate fields
+            $('#title').val(movie.title);
+            $('#original_title').val(movie.original_title);
+            $('#original_language').val(movie.original_language);
+            $('#release_date').val(movie.release_date);
+            $('#tmdb_id').val(movie.id);
+            $('#poster_path').val(movie.poster_path);
+            $('#backdrop_path').val(movie.backdrop_path);
+            $('#vote_average').val(movie.vote_average);
+            $('#vote_count').val(movie.vote_count);
+            $('#popularity').val(movie.popularity);
+            $('#overview').val(movie.overview);
+            $('#adult').prop('checked', movie.adult);
+            $('#video').val(movie.video);
+            
+            // Populate Credits
+            renderCredits(movie.acting || [], movie.directing || [], movie.writing || []);
+            
+            // Handle Collection
+            if (movie.belongs_to_collection) {
+                $('#collectionSection').removeClass('hidden');
+                $('#collection_id').val(movie.belongs_to_collection.id);
+                $('#collection_name').val(movie.belongs_to_collection.name);
+                $('#collection_name_display').text(movie.belongs_to_collection.name);
+                $('#collection_poster_path').val(movie.belongs_to_collection.poster_path);
+                $('#collection_backdrop_path').val(movie.belongs_to_collection.backdrop_path);
+                
+                if (movie.belongs_to_collection.poster_path) {
+                    const posterUrl = movie.belongs_to_collection.poster_path.startsWith('http') 
+                        ? movie.belongs_to_collection.poster_path 
+                        : TMDB_IMAGE_BASE_URL + movie.belongs_to_collection.poster_path;
+                    $('#collection_poster').attr('src', posterUrl).removeClass('hidden');
+                } else {
+                    $('#collection_poster').addClass('hidden');
+                }
+            } else {
+                $('#collectionSection').addClass('hidden');
+                $('#collection_id').val('');
+                $('#collection_name').val('');
+                $('#collection_poster_path').val('');
+                $('#collection_backdrop_path').val('');
+            }
+
+            // Handle Genre Select (multi)
+            $('input[name="genre_ids"]').prop('checked', false);
+            if (movie.genre_ids && Array.isArray(movie.genre_ids)) {
+                movie.genre_ids.forEach(id => {
+                    $(`input[name="genre_ids"][value="${id}"]`).prop('checked', true);
+                });
+            }
+
+            // Previews
+            if (movie.poster_path) previewImage(movie.poster_path, 'poster_preview');
+            if (movie.backdrop_path) previewImage(movie.backdrop_path, 'backdrop_preview');
+
+            // Handle Seasons (Edit Mode)
+            if (movie.media_type === 'tv') {
+                $('#tvShowSection').removeClass('hidden');
+                $('#seasonsContainer').empty();
+                
+                // Fetch seasons from new API
+                $.get(`/admin/moviemanage/get-seasons?movieId=${movie._id}`, function(seasons) {
+                    if (seasons && seasons.length > 0) {
+                        seasons.forEach(season => {
+                            renderSeasonItem(season);
+                        });
+                    } else if (movie.seasons && movie.seasons.length > 0) {
+                        // Fallback to embedded if exists (migration support)
+                        movie.seasons.forEach(season => {
+                            renderSeasonItem(season);
+                        });
+                    }
+                });
+            } else {
+                $('#tvShowSection').addClass('hidden');
+                $('#seasonsContainer').empty();
+            }
+
+            $('#movieModal').removeClass('hidden');
+        }
+
+        function saveMovie() {
+            const mode = $('#mode').val();
+            const url = mode === 'create' ? '/admin/moviemanage/insert-movie' : '/admin/moviemanage/update-movie';
+            const formData = $('#movieForm').serializeArray();
+            const data = {};
+            
+            // Handle multi-select properly
+            const genreIds = [];
+            formData.forEach(item => {
+                if (item.name === 'genre_ids') {
+                    genreIds.push(item.value);
+                } else {
+                    data[item.name] = item.value;
+                }
+            });
+            data.genre_ids = genreIds;
+            
+            // Handle checkboxes
+            data.adult = $('#adult').is(':checked');
+            data.video = $('#video').val();
+            // Attach credits JSON
+            data.acting = $('#acting').val();
+            data.directing = $('#directing').val();
+            data.writing = $('#writing').val();
+
+            // Collect TV Show Seasons Data
+            if ($('input[name="media_type"]:checked').val() === 'tv') {
+                const seasons = [];
+                $('#seasonsContainer .season-item').each(function() {
+                    const seasonEl = $(this);
+                    const season = {
+                        season_number: seasonEl.find('.season-number').val(),
+                        name: seasonEl.find('.season-name').val(),
+                        episode_count: seasonEl.find('.season-episode-count').val(),
+                        poster_path: seasonEl.find('.season-poster').val(),
+                        episodes: []
+                    };
+
+                    seasonEl.find('.episode-item').each(function() {
+                        const epEl = $(this);
+                        const episode = {
+                            episode_number: epEl.find('.episode-number').val(),
+                            name: epEl.find('.episode-name').val(),
+                            overview: epEl.find('.episode-overview').val(),
+                            still_path: epEl.find('.episode-still').val(),
+                            air_date: epEl.find('.episode-air-date').val(),
+                            video_url: epEl.find('.episode-video-url').val()
+                        };
+                        season.episodes.push(episode);
+                    });
+
+                    seasons.push(season);
+                });
+                data.seasons = seasons;
+                console.log('Seasons data collected:', data.seasons);
+            }
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    if (response.status) {
+                        alert(response.message);
+                        closeModal();
+                        loadMovies(currentPage);
+                    } else {
+                        alert(response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function(err) {
+                    console.error(err);
+                    alert('Lỗi kết nối đến server');
+                }
+            });
+        }
+
+        // Render credits lists and hidden fields
+        function renderCredits(acting, directing, writing) {
+            try {
+                $('#acting').val(JSON.stringify(acting || []));
+                $('#directing').val(JSON.stringify(directing || []));
+                $('#writing').val(JSON.stringify(writing || []));
+            } catch(e) {
+                $('#acting').val('[]');
+                $('#directing').val('[]');
+                $('#writing').val('[]');
+            }
+            const renderList = (items) => {
+                if (!items || items.length === 0) return '<div class="text-xs text-gray-500">Không có dữ liệu</div>';
+                return items.map(p => `
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded overflow-hidden bg-white/5 border border-white/10">
+                            <img src="${p.profile_path ? (p.profile_path.startsWith('http') ? p.profile_path : TMDB_IMAGE_BASE_URL + p.profile_path) : 'https://via.placeholder.com/28'}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/28'">
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs text-white">${p.name}</div>
+                            <div class="text-[10px] text-gray-500">${p.known_for_department || ''}${p.character ? ' • ' + p.character : ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+            };
+            $('#actingList').html(renderList(acting));
+            $('#directingList').html(renderList(directing));
+            $('#writingList').html(renderList(writing));
+        }
+
+        window.deleteMovie = function(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa phim này?')) return;
+            
+            $.ajax({
+                url: `/admin/moviemanage/delete-movie?id=${id}`,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.status) {
+                        loadMovies(currentPage);
+                    } else {
+                        alert('Xóa thất bại');
+                    }
+                },
+                error: function(err) {
+                    console.error(err);
+                    alert('Lỗi khi xóa');
+                }
+            });
+        }
+
+        window.previewImage = function(path, imgId) {
+            const img = document.getElementById(imgId);
+            if (!path) {
+                img.classList.add('hidden');
+                return;
+            }
+            
+            const url = path.startsWith('http') ? path : TMDB_IMAGE_BASE_URL + path;
+            img.src = url;
+            img.classList.remove('hidden');
+        }
+
+        // TV Show Helpers
+        window.renderSeasonItem = function(season) {
+            const container = $('#seasonsContainer');
+            const seasonId = Date.now() + Math.random().toString(36).substr(2, 9);
+            
+            const episodesHtml = season.episodes ? season.episodes.map(ep => renderEpisodeItem(ep)).join('') : '';
+
+            const html = `
+                <div class="season-item bg-white/5 border border-white/10 rounded-lg overflow-hidden" id="${seasonId}">
+                    <div class="p-4 flex items-center gap-4 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors" onclick="toggleEpisodes('${seasonId}')">
+                        <span class="material-symbols-outlined text-gray-400 transform transition-transform duration-200 chevron-icon rotate-180">expand_more</span>
+                        <div class="w-10 h-14 bg-surface-dark rounded overflow-hidden flex-shrink-0">
+                            <img src="${season.poster_path ? (season.poster_path.startsWith('http') ? season.poster_path : TMDB_IMAGE_BASE_URL + season.poster_path) : 'https://via.placeholder.com/40x60'}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-white text-sm">${season.name} (Season ${season.season_number})</h4>
+                            <p class="text-xs text-gray-400">${season.episode_count || (season.episodes ? season.episodes.length : 0)} tập</p>
+                        </div>
+                        <button type="button" onclick="event.stopPropagation(); deleteSeason('${seasonId}')" class="text-gray-500 hover:text-red-500 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
+                    
+                    <div class="episodes-container p-4 space-y-3 border-t border-white/10 bg-surface-dark/50">
+                        <input type="hidden" class="season-number" value="${season.season_number}">
+                        <input type="hidden" class="season-name" value="${season.name}">
+                        <input type="hidden" class="season-episode-count" value="${season.episode_count || 0}">
+                        <input type="hidden" class="season-poster" value="${season.poster_path}">
+                        
+                        <div class="episodes-list space-y-3">
+                            ${episodesHtml}
+                        </div>
+                        
+                        <button type="button" onclick="addManualEpisode('${seasonId}')" class="w-full py-2 rounded border border-dashed border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/30 transition-colors flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[16px]">add</span>
+                            Thêm tập
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.append(html);
+        }
+
+        window.renderEpisodeItem = function(ep) {
+            return `
+                <div class="episode-item grid grid-cols-12 gap-3 p-3 rounded bg-surface-dark border border-white/5 hover:border-white/10 transition-colors">
+                    <div class="col-span-1">
+                        <label class="block text-[10px] text-gray-500 uppercase">Số tập</label>
+                        <input type="number" class="episode-number w-full bg-transparent border-b border-white/10 text-white text-sm focus:border-primary py-1" value="${ep.episode_number}">
+                    </div>
+                    <div class="col-span-4">
+                        <label class="block text-[10px] text-gray-500 uppercase">Tên tập</label>
+                        <input type="text" class="episode-name w-full bg-transparent border-b border-white/10 text-white text-sm focus:border-primary py-1" value="${ep.name || ''}">
+                    </div>
+                    <div class="col-span-6">
+                        <label class="block text-[10px] text-gray-500 uppercase text-primary">Video URL (M3U8/MP4/Embed)</label>
+                        <input type="text" class="episode-video-url w-full bg-transparent border-b border-white/10 text-white text-sm focus:border-primary py-1 placeholder-gray-600" value="${ep.video_url || ''}" placeholder="Nhập link video...">
+                    </div>
+                    <div class="col-span-1 flex items-end justify-end">
+                        <button type="button" onclick="$(this).closest('.episode-item').remove()" class="text-gray-500 hover:text-red-500 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                    
+                    <input type="hidden" class="episode-overview" value="${ep.overview || ''}">
+                    <input type="hidden" class="episode-still" value="${ep.still_path || ''}">
+                    <input type="hidden" class="episode-air-date" value="${ep.air_date || ''}">
+                </div>
+            `;
+        }
+
+        window.toggleEpisodes = function(seasonId) {
+            const el = $(`#${seasonId}`);
+            el.find('.episodes-container').toggleClass('hidden');
+            el.find('.chevron-icon').toggleClass('rotate-180');
+        }
+
+        window.addManualSeason = function() {
+            const seasonNumber = $('#seasonsContainer .season-item').length + 1;
+            renderSeasonItem({
+                season_number: seasonNumber,
+                name: `Season ${seasonNumber}`,
+                episode_count: 0,
+                poster_path: '',
+                episodes: []
+            });
+        }
+
+        window.addManualEpisode = function(seasonId) {
+            const container = $(`#${seasonId} .episodes-list`);
+            const epNum = container.find('.episode-item').length + 1;
+            container.append(renderEpisodeItem({
+                episode_number: epNum,
+                name: `Tập ${epNum}`,
+                video_url: ''
+            }));
+        }
+
+        window.deleteSeason = function(seasonId) {
+            if(confirm('Xóa season này?')) {
+                $(`#${seasonId}`).remove();
+            }
+        }
+
+        window.bulkFillUrls = function(seasonId) {
+            const pattern = prompt(
+                'Nhập cấu trúc URL video của bạn để tự động điền cho tất cả các tập trong Season này.\n\n' +
+                'Các biến hỗ trợ:\n' +
+                '{ep} - Số tập (1, 2, 3...)\n' +
+                '{ep0} - Số tập có số 0 (01, 02, 03...)\n\n' +
+                'Ví dụ: https://myserver.com/phim/it-welcome-to-derry/s01/tap-{ep}.m3u8'
+            );
+            
+            if (!pattern) return;
+            
+            $(`#${seasonId} .episode-item`).each(function() {
+                const epNum = parseInt($(this).find('.episode-number').val());
+                if (!isNaN(epNum)) {
+                    let url = pattern
+                        .replace(/{ep}/g, epNum)
+                        .replace(/{ep0}/g, epNum < 10 ? '0' + epNum : epNum);
+                    
+                    $(this).find('.episode-video-url').val(url);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<header class="fixed top-0 left-0 right-0 z-50 flex h-20 items-center justify-between px-6 transition-all duration-300 bg-gradient-to-b from-black/80 to-transparent lg:px-12 backdrop-blur-[2px]">
+    <div class="flex items-center gap-12">
+        <a class="flex items-center gap-2 group" href="/">
+            <span class="material-symbols-outlined text-4xl text-primary drop-shadow-[0_0_8px_rgba(229,9,20,0.6)] group-hover:scale-105 transition-transform">movie_filter</span>
+            <span class="text-2xl font-bold tracking-wider text-white">STREAMLINE</span>
+        </a>
+        <nav class="hidden lg:flex items-center gap-8">
+            <a class="text-sm font-medium text-gray-300 hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full" href="/">Trang Chủ</a>
+            
+            <!-- Thể loại Dropdown -->
+            <div class="relative group h-full flex items-center">
+                <button class="text-sm font-medium text-gray-300 hover:text-white transition-colors flex items-center gap-1 group-hover:text-white">
+                    Thể loại
+                    <span class="material-symbols-outlined text-[18px] transition-transform duration-200 group-hover:rotate-180">expand_more</span>
+                </button>
+                <div class="absolute top-full left-0 pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left z-50">
+                    <div class="w-[800px] bg-[#141414]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-6 grid grid-cols-4 gap-x-6 gap-y-4">
+                        <% if (typeof allGenres !== 'undefined' && allGenres) { %>
+                            <% allGenres.forEach(function(genre) { %>
+                                <a href="/home/discover?genres=<%= genre._id %>" class="text-sm text-gray-200 hover:text-white hover:font-bold transition-colors whitespace-nowrap overflow-hidden text-ellipsis" title="<%= genre.Name %>">
+                                    <%= genre.Name %>
+                                </a>
+                            <% }); %>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <a class="text-sm font-medium text-gray-300 hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full" href="/home/discover?mediaType=movie">Phim Lẻ</a>
+            <a class="text-sm font-medium text-gray-300 hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full" href="/home/discover?mediaType=tv">Phim Bộ</a>
+            <a class="text-sm font-medium text-gray-300 hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full" href="/home/discover">Khám phá</a>
+        </nav>
+    </div>
+    
+    <div class="flex items-center gap-6">
+        <div class="hidden lg:flex max-w-xs w-full transition-all duration-300 focus-within:max-w-sm group relative">
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">search</span>
+                </div>
+                <input id="searchInput" class="block w-full pl-10 pr-10 py-2 border border-white/10 rounded-full leading-5 bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all duration-300 text-sm" placeholder="Tìm kiếm phim, show..." type="text" autocomplete="off" value="<%= typeof selectedKeyword !== 'undefined' ? selectedKeyword : '' %>"/>
+                <!-- Clear Button -->
+                <button id="clearSearch" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white <%= (typeof selectedKeyword !== 'undefined' && selectedKeyword) ? '' : 'hidden' %> cursor-pointer">
+                     <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+                <div id="searchSuggestions" class="absolute top-full left-0 mt-2 w-full rounded-xl shadow-2xl bg-[#141414]/95 ring-1 ring-white/10 backdrop-blur-md hidden z-50">
+                    <div class="max-h-80 overflow-y-auto custom-scrollbar">
+                        <div class="p-3 text-center text-gray-500 text-sm">Không có gợi ý</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('searchInput');
+                const clearSearchBtn = document.getElementById('clearSearch');
+                const sugg = document.getElementById('searchSuggestions');
+                let debounceTimer = null;
+
+                searchInput.addEventListener('input', function(e) {
+                    const query = e.target.value;
+                    if(query.length > 0) {
+                        clearSearchBtn.classList.remove('hidden');
+                        if (debounceTimer) clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(function() {
+                            const q = searchInput.value.trim();
+                            if (q.length === 0) {
+                                if (sugg) sugg.classList.add('hidden');
+                                return;
+                            }
+                            fetch('/home/api/search-suggestions?q=' + encodeURIComponent(q))
+                                .then(r => r.json())
+                                .then(items => {
+                                    if (!sugg) return;
+                                    if (Array.isArray(items) && items.length > 0) {
+                                        const html = items.map(m => {
+                                            const poster = m.poster_path 
+                                                ? (String(m.poster_path).startsWith('http') ? m.poster_path : ('https://image.tmdb.org/t/p/w185' + m.poster_path))
+                                                : 'https://via.placeholder.com/60x90?text=No+Img';
+                                            const title = m.title || '';
+                                            const year = m.release_date ? new Date(m.release_date).getFullYear() : '';
+                                            const type = m.media_type === 'tv' ? 'TV' : 'Movie';
+                                            return (
+                                                '<a href="/movie/detail?id=' + m._id + '" class="flex gap-3 p-3 hover:bg-white/5 border-b border-white/5 transition-colors">' +
+                                                    '<img src="' + poster + '" alt="' + title + '" class="w-[40px] h-[60px] object-cover rounded">' +
+                                                    '<div class="flex-1 min-w-0">' +
+                                                        '<p class="text-sm font-bold text-white truncate">' + title + '</p>' +
+                                                        '<p class="text-xs text-gray-400">' + (year || '') + (year ? ' • ' : '') + type + '</p>' +
+                                                    '</div>' +
+                                                '</a>'
+                                            );
+                                        }).join('');
+                                        sugg.querySelector('.max-h-80').innerHTML = html;
+                                        sugg.classList.remove('hidden');
+                                    } else {
+                                        sugg.querySelector('.max-h-80').innerHTML = '<div class="p-3 text-center text-gray-500 text-sm">Không có gợi ý</div>';
+                                        sugg.classList.remove('hidden');
+                                    }
+                                })
+                                .catch(() => {
+                                    if (sugg) {
+                                        sugg.querySelector('.max-h-80').innerHTML = '<div class="p-3 text-center text-gray-500 text-sm">Không thể tải gợi ý</div>';
+                                        sugg.classList.remove('hidden');
+                                    }
+                                });
+                        }, 250);
+                    } else {
+                        clearSearchBtn.classList.add('hidden');
+                        if (sugg) sugg.classList.add('hidden');
+                    }
+                });
+
+                clearSearchBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    searchInput.focus();
+                    clearSearchBtn.classList.add('hidden');
+                    if (sugg) sugg.classList.add('hidden');
+                });
+                
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const query = searchInput.value.trim();
+                        if (query) {
+                             window.location.href = `/home/discover?keyword=${encodeURIComponent(query)}`;
+                        }
+                        if (sugg) sugg.classList.add('hidden');
+                    }
+                });
+
+                document.addEventListener('click', function(ev){
+                    if (!sugg) return;
+                    const container = searchInput.closest('.relative');
+                    if (container && !container.contains(ev.target)) {
+                        sugg.classList.add('hidden');
+                    }
+                });
+            });
+        </script>
+
+        <button class="lg:hidden text-gray-300 hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-2xl">search</span>
+        </button>
+
+        <% if (typeof user !== 'undefined' && user) { %>
+            <!-- Notification Dropdown -->
+            <div class="relative group h-full flex items-center">
+                 <button class="flex items-center justify-center size-9 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition-colors relative" id="notif-btn">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    <span id="notif-badge" class="hidden absolute top-0 right-0 size-4 bg-primary rounded-full shadow-lg flex items-center justify-center text-[10px] font-bold text-white border border-[#141414]">0</span>
+                </button>
+                
+                <div class="absolute right-0 top-full mt-2 w-80 rounded-xl shadow-2xl bg-[#141414]/95 ring-1 ring-white/10 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
+                    <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                        <h3 class="font-bold text-white text-sm">Thông báo</h3>
+                        <button class="text-xs text-accent-blue hover:text-white transition-colors" onclick="markAllRead()">Đánh dấu đã đọc</button>
+                    </div>
+                    <div class="max-h-80 overflow-y-auto custom-scrollbar" id="notif-list">
+                        <div class="p-4 text-center text-gray-500 text-sm">Đang tải...</div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                var socketScriptAdded = false;
+                document.addEventListener('DOMContentLoaded', function() {
+                    const notifBadge = document.getElementById('notif-badge');
+                    const notifList = document.getElementById('notif-list');
+                    
+                    if (!notifBadge || !notifList) return;
+
+                    if (!socketScriptAdded) {
+                        var s = document.createElement('script');
+                        s.src = '/socket.io/socket.io.js';
+                        s.onload = function() {
+                            var socket = io();
+                            socket.emit('join', '<%= user.email %>');
+                            socket.on('notification', function(n) {
+                                var poster = n.moviePoster ? (String(n.moviePoster).startsWith('http') ? n.moviePoster : ('https://image.tmdb.org/t/p/w185' + n.moviePoster)) : 'https://via.placeholder.com/60x90?text=No+Img';
+                                var isNew = !n.isRead;
+                                var itemHtml = '';
+                                if (n.type === 'NEW_MOVIE') {
+                                    itemHtml = '<a href="/movie/detail?id=' + n.movieId + '" class="block p-3 hover:bg-white/5 border-b border-white/5 transition-colors ' + (isNew ? 'bg-white/5' : '') + '" onclick="markRead(\'' + (n._id || '') + '\')">' +
+                                        '<div class="flex gap-3">' +
+                                            '<img src="' + poster + '" alt="' + (n.movieTitle || '') + '" class="w-[40px] h-[60px] object-cover rounded">' +
+                                            '<div class="flex-1 min-w-0">' +
+                                                '<p class="text-sm text-gray-200 leading-snug break-words"><span class="font-bold text-white">Đã có phim mới</span></p>' +
+                                                '<p class="text-xs text-gray-400">' + (n.movieTitle || '') + '</p>' +
+                                                '<p class="text-[10px] text-gray-500 mt-1">' + new Date(n.createdAt).toLocaleString('vi-VN') + '</p>' +
+                                            '</div>' +
+                                            (isNew ? '<div class="size-2 rounded-full bg-accent-blue mt-1.5 flex-shrink-0"></div>' : '') +
+                                        '</div>' +
+                                    '</a>';
+                                } else if (n.type === 'REPLY_REVIEW') {
+                                    itemHtml = '<a href="/movie/detail?id=' + n.movieId + '" class="block p-3 hover:bg-white/5 border-b border-white/5 transition-colors ' + (isNew ? 'bg-white/5' : '') + '" onclick="markRead(\'' + (n._id || '') + '\')">' +
+                                        '<div class="flex gap-3">' +
+                                            '<div class="flex-1 min-w-0">' +
+                                                '<p class="text-sm text-gray-200 leading-snug break-words"><span class="font-bold text-white">' + (n.senderName || 'Người dùng') + '</span> ' + (n.content || '') + '</p>' +
+                                                '<p class="text-[10px] text-gray-500 mt-1">' + new Date(n.createdAt).toLocaleString('vi-VN') + '</p>' +
+                                            '</div>' +
+                                            (isNew ? '<div class="size-2 rounded-full bg-accent-blue mt-1.5 flex-shrink-0"></div>' : '') +
+                                        '</div>' +
+                                    '</a>';
+                                } else {
+                                    itemHtml = '<a href="/movie/detail?id=' + n.movieId + '" class="block p-3 hover:bg-white/5 border-b border-white/5 transition-colors ' + (isNew ? 'bg-white/5' : '') + '" onclick="markRead(\'' + (n._id || '') + '\')">' +
+                                        '<div class="flex gap-3">' +
+                                            '<div class="flex-1 min-w-0">' +
+                                                '<p class="text-sm text-gray-200 leading-snug break-words"><span class="font-bold text-white">' + (n.senderName || 'Người dùng') + '</span> ' +
+                                                (n.type === 'LIKE_REVIEW' ? 'đã thích đánh giá của bạn' :
+                                                 n.type === 'LIKE_REPLY' ? 'đã thích bình luận của bạn' :
+                                                 n.type === 'REPLY_REPLY' ? (n.content || 'đã nhắc đến bạn trong bình luận') : 'đã tương tác với bạn') +
+                                                '</p>' +
+                                                '<p class="text-[10px] text-gray-500 mt-1">' + new Date(n.createdAt).toLocaleString('vi-VN') + '</p>' +
+                                            '</div>' +
+                                            (isNew ? '<div class="size-2 rounded-full bg-accent-blue mt-1.5 flex-shrink-0"></div>' : '') +
+                                        '</div>' +
+                                    '</a>';
+                                }
+                                notifList.innerHTML = itemHtml + notifList.innerHTML;
+                                var currentCount = 0;
+                                if (!notifBadge.classList.contains('hidden')) {
+                                    var text = notifBadge.textContent.trim();
+                                    currentCount = text === '99+' ? 99 : parseInt(text) || 0;
+                                }
+                                var newCount = currentCount + 1;
+                                notifBadge.textContent = newCount > 99 ? '99+' : newCount;
+                                notifBadge.classList.remove('hidden');
+                            });
+                        };
+                        document.body.appendChild(s);
+                        socketScriptAdded = true;
+                    }
+
+                    function loadNotifications() {
+                        fetch('/notification/list')
+                        .then(r => r.json())
+                        .then(resp => {
+                            if(resp.status && resp.data) {
+                                // Update Badge
+                                if(resp.unreadCount > 0) {
+                                    notifBadge.textContent = resp.unreadCount > 99 ? '99+' : resp.unreadCount;
+                                    notifBadge.classList.remove('hidden');
+                                } else {
+                                    notifBadge.classList.add('hidden');
+                                }
+                                
+                                // Update List
+                                if(resp.data.length === 0) {
+                                    notifList.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Không có thông báo mới</div>';
+                                } else {
+                                    notifList.innerHTML = resp.data.map(n => `
+                                        ${
+                                            n.type === 'NEW_MOVIE'
+                                            ? `<a href="/movie/detail?id=${n.movieId}" class="block p-3 hover:bg-white/5 border-b border-white/5 transition-colors ${!n.isRead ? 'bg-white/5' : ''}" onclick="markRead('${n._id}')">
+                                                <div class="flex gap-3">
+                                                    <img src="${n.moviePoster ? (String(n.moviePoster).startsWith('http') ? n.moviePoster : ('https://image.tmdb.org/t/p/w185' + n.moviePoster)) : 'https://via.placeholder.com/60x90?text=No+Img'}" alt="${n.movieTitle || ''}" class="w-[40px] h-[60px] object-cover rounded">
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm text-gray-200 leading-snug break-words"><span class="font-bold text-white">Đã có phim mới</span></p>
+                                                        <p class="text-xs text-gray-400">${n.movieTitle || ''}</p>
+                                                        <p class="text-[10px] text-gray-500 mt-1">${new Date(n.createdAt).toLocaleString('vi-VN')}</p>
+                                                    </div>
+                                                    ${!n.isRead ? '<div class="size-2 rounded-full bg-accent-blue mt-1.5 flex-shrink-0"></div>' : ''}
+                                                </div>
+                                            </a>`
+                                            : `<a href="/movie/detail?id=${n.movieId}" class="block p-3 hover:bg-white/5 border-b border-white/5 transition-colors ${!n.isRead ? 'bg-white/5' : ''}" onclick="markRead('${n._id}')">
+                                                <div class="flex gap-3">
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm text-gray-200 leading-snug break-words">
+                                                            <span class="font-bold text-white">${n.senderName || 'Người dùng'}</span> 
+                                                            ${n.type === 'REPLY_REVIEW' ? (n.content || 'đã trả lời đánh giá của bạn') :
+                                                              n.type === 'REPLY_REPLY' ? (n.content || 'đã nhắc đến bạn trong bình luận') :
+                                                              n.type === 'LIKE_REVIEW' ? 'đã thích đánh giá của bạn' :
+                                                              n.type === 'LIKE_REPLY' ? 'đã thích bình luận của bạn' : 'đã tương tác với bạn'}
+                                                        </p>
+                                                        <p class="text-[10px] text-gray-500 mt-1">${new Date(n.createdAt).toLocaleString('vi-VN')}</p>
+                                                    </div>
+                                                    ${!n.isRead ? '<div class="size-2 rounded-full bg-accent-blue mt-1.5 flex-shrink-0"></div>' : ''}
+                                                </div>
+                                            </a>`
+                                        }
+                                    `).join('');
+                                }
+                            }
+                        })
+                        .catch(e => console.error("Notif load error:", e));
+                    }
+                    
+                    window.markAllRead = function() {
+                        fetch('/notification/read', { method: 'POST' })
+                        .then(() => {
+                            loadNotifications();
+                        });
+                    }
+                    
+                    window.markRead = function(id) {
+                        fetch('/notification/read', { 
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ id: id })
+                        });
+                    }
+
+                    loadNotifications();
+                    // Poll every 30s
+                    setInterval(loadNotifications, 30000);
+                });
+            </script>
+
+            <div class="relative group">
+                <div class="size-9 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white ring-2 ring-white/10 cursor-pointer hover:ring-accent-blue/50 transition-colors shadow-lg">
+                    <%= (user.email && user.email.charAt(0).toUpperCase()) || 'U' %>
+                </div>
+                
+                <!-- Dropdown Menu -->
+                <div class="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl bg-[#141414]/95 ring-1 ring-white/10 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
+                    <div class="py-2">
+                        <div class="px-4 py-3 border-b border-white/10 mb-1">
+                            <p class="text-sm font-medium text-white truncate"><%= user.name %></p>
+                            <p class="text-xs text-gray-400 truncate mt-0.5"><%= user.email %></p>
+                        </div>
+
+                        <% if (user.role === 'admin') { %>
+                            <a href="/admin" class="group flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-primary transition-colors">dashboard</span>
+                                Trang quản trị
+                            </a>
+                        <% } %>
+                        
+                        <a href="/profile" class="group flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-primary transition-colors">person</span>
+                            Hồ sơ
+                        </a>
+                        
+                        <a href="/auth/logout" class="group flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-primary transition-colors">logout</span>
+                            Đăng xuất
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <a href="/auth/login" class="text-sm font-bold text-white hover:text-primary transition-colors whitespace-nowrap">Đăng nhập</a>
+        <% } %>
+    </div>
+</header>

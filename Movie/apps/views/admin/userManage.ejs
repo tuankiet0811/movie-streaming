@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partials/head') %>
+</head>
+<body class="font-display bg-background-dark text-slate-200 antialiased selection:bg-primary selection:text-white overflow-hidden h-screen flex">
+    <%- include('partials/sidebar') %>
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background-dark">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-glow opacity-30 pointer-events-none z-0"></div>
+        <%- include('partials/header') %>
+        <div class="flex-1 overflow-y-auto p-8 relative z-10">
+            <!-- Content -->
+            <div class="max-w-[1600px] mx-auto space-y-8">
+                <!-- Header Section -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight text-white">Quản lý người dùng</h2>
+                        <p class="text-gray-400 mt-1">Danh sách và quản lý tài khoản người dùng.</p>
+                    </div>
+                    <!-- Optional Actions -->
+                    <!-- <div class="flex gap-3">
+                        <button class="px-5 py-2.5 rounded-full bg-surface-dark border border-white/10 text-sm font-medium hover:bg-white/5 transition-colors text-gray-300">Xuất danh sách</button>
+                    </div> -->
+                </div>
+
+                <!-- User Table Section -->
+                <div class="rounded-2xl glass-panel border border-white/5 overflow-hidden">
+                    <div class="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h3 class="text-lg font-bold text-white">Danh sách người dùng</h3>
+                        <div class="flex gap-2">
+                            <input class="bg-surface-dark border border-white/10 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-secondary focus:border-secondary w-64 text-white placeholder-gray-500" placeholder="Tìm kiếm người dùng..." type="text"/>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-white/5 text-gray-400 font-medium uppercase tracking-wider text-xs">
+                                <tr>
+                                    <th class="px-6 py-4">Tên người dùng</th>
+                                    <th class="px-6 py-4">Email</th>
+                                    <th class="px-6 py-4">Vai trò</th>
+                                    <th class="px-6 py-4">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <% if (typeof users !== 'undefined' && users && users.length > 0) { %>
+                                    <% users.forEach(function(user) { %>
+                                        <tr class="hover:bg-white/5 transition-colors">
+                                            <td class="px-6 py-4 text-white font-medium">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-xs font-bold text-white">
+                                                        <%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %>
+                                                    </div>
+                                                    <%= user.name || 'N/A' %>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-gray-300"><%= user.email %></td>
+                                            <td class="px-6 py-4">
+                                                <% if (user.role === 'admin') { %>
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                                                        Quản trị viên
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-secondary/10 text-secondary border border-secondary/20">
+                                                        Người dùng
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-2">
+                                                    <button class="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors" title="Chỉnh sửa">
+                                                        <span class="material-symbols-outlined text-lg">edit</span>
+                                                    </button>
+                                                    <button class="p-1.5 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors" title="Xóa">
+                                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                            Không có người dùng nào.
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination (Optional) -->
+                    <!-- <div class="p-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-400">
+                        <span>Hiển thị 1-10 trong số 12,543</span>
+                        <div class="flex gap-1">
+                            <button class="px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50" disabled>Trước</button>
+                            <button class="px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 transition-colors">Sau</button>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

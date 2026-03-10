@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <%- include('partials/head') %>
+</head>
+<body class="font-display bg-background-dark text-slate-200 antialiased selection:bg-primary selection:text-white overflow-hidden h-screen flex">
+    <%- include('partials/sidebar') %>
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background-dark">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-glow opacity-30 pointer-events-none z-0"></div>
+        <%- include('partials/header') %>
+        
+        <div class="flex-1 overflow-y-auto p-8 relative z-10">
+            <div class="max-w-[1200px] mx-auto space-y-8">
+                <!-- Breadcrumb -->
+                <div class="flex items-center gap-2 text-sm text-gray-400">
+                    <a href="/admin/moviemanage" class="hover:text-white transition-colors">Quản lý phim</a>
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <span class="text-white">Chi tiết phim</span>
+                </div>
+
+                <!-- Hero Section -->
+                <div class="relative rounded-2xl overflow-hidden bg-surface-dark border border-white/10">
+                    <!-- Backdrop -->
+                    <div class="absolute inset-0 h-[400px]">
+                        <% if (movie.backdrop_path) { %>
+                        <img src="https://image.tmdb.org/t/p/original<%= movie.backdrop_path %>" class="w-full h-full object-cover opacity-30">
+                        <% } %>
+                        <div class="absolute inset-0 bg-gradient-to-t from-surface-dark via-surface-dark/80 to-transparent"></div>
+                    </div>
+
+                    <div class="relative p-8 mt-[120px] flex flex-col md:flex-row gap-8">
+                        <!-- Poster -->
+                        <div class="flex-none w-[240px] rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-surface-dark">
+                            <% if (movie.poster_path) { %>
+                            <img src="https://image.tmdb.org/t/p/w500<%= movie.poster_path %>" class="w-full h-full object-cover">
+                            <% } else { %>
+                            <div class="w-full h-[360px] flex items-center justify-center bg-white/5 text-gray-500">
+                                <span class="material-symbols-outlined text-[48px]">movie</span>
+                            </div>
+                            <% } %>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="flex-1 pt-8">
+                            <div class="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                    <h1 class="text-3xl font-bold text-white mb-2"><%= movie.title %></h1>
+                                    <div class="flex items-center gap-4 text-sm text-gray-400 mb-4">
+                                        <% if (movie.release_date) { %>
+                                        <span><%= new Date(movie.release_date).getFullYear() %></span>
+                                        <% } %>
+                                        <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                                        <span class="uppercase"><%= movie.original_language %></span>
+                                        <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                                        <span class="inline-flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px] text-yellow-500">star</span>
+                                            <span class="text-white"><%= movie.vote_average ? movie.vote_average.toFixed(1) : '0.0' %></span>
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2 mb-6">
+                                        <span class="px-3 py-1 rounded-full text-xs font-medium border <%= movie.media_type === 'tv' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20' %>">
+                                            <%= movie.media_type === 'tv' ? 'TV Show' : 'Movie' %>
+                                        </span>
+                                        <% if (movie.adult) { %>
+                                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">18+</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <a href="<%= movie.video %>" target="_blank" class="px-4 py-2 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors flex items-center gap-2 text-sm font-medium">
+                                        <span class="material-symbols-outlined text-[18px]">play_circle</span>
+                                        Trailer
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <h3 class="text-lg font-bold text-white mb-2">Nội dung</h3>
+                                    <p class="text-gray-400 leading-relaxed"><%= movie.overview || 'Chưa có mô tả.' %></p>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-white/10">
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">Tên gốc</p>
+                                        <p class="text-white font-medium"><%= movie.original_title || '-' %></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">Độ phổ biến</p>
+                                        <p class="text-white font-medium"><%= movie.popularity ? movie.popularity.toFixed(0) : 0 %></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">TMDB ID</p>
+                                        <p class="text-white font-medium"><%= movie.id || '-' %></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">Lượt bình chọn</p>
+                                        <p class="text-white font-medium"><%= movie.vote_count || 0 %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collection Info (if any) -->
+                <% if (movie.belongs_to_collection) { %>
+                <div class="bg-surface-dark border border-white/10 rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Bộ sưu tập</h3>
+                    <div class="flex items-center gap-4">
+                        <% if (movie.belongs_to_collection.poster_path) { %>
+                        <img src="https://image.tmdb.org/t/p/w200<%= movie.belongs_to_collection.poster_path %>" class="w-16 h-24 object-cover rounded-lg bg-white/5">
+                        <% } %>
+                        <div>
+                            <h4 class="font-bold text-white"><%= movie.belongs_to_collection.name %></h4>
+                            <p class="text-sm text-gray-400 mt-1">ID: <%= movie.belongs_to_collection.id %></p>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Seasons & Episodes (for TV Shows) -->
+                <% if (movie.media_type === 'tv' && seasons && seasons.length > 0) { %>
+                <div class="space-y-6">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-purple-500">layers</span>
+                        Danh sách tập phim
+                    </h3>
+                    
+                    <div class="grid gap-6">
+                        <% seasons.forEach(function(season, index) { %>
+                        <div class="bg-surface-dark border border-white/10 rounded-2xl overflow-hidden">
+                            <div class="p-4 bg-white/5 border-b border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors group" onclick="toggleSeason('<%= index %>')">
+                                <div class="flex items-center gap-4">
+                                    <% if (season.poster_path) { %>
+                                    <img src="https://image.tmdb.org/t/p/w200<%= season.poster_path %>" class="w-10 h-14 object-cover rounded bg-black/20">
+                                    <% } %>
+                                    <div>
+                                        <h4 class="font-bold text-white text-lg"><%= season.name %></h4>
+                                        <p class="text-sm text-gray-400">Season <%= season.season_number %> • <%= season.episodes ? season.episodes.length : 0 %> tập</p>
+                                    </div>
+                                </div>
+                                <button class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-white/10 transition-colors">
+                                    <span class="material-symbols-outlined transition-transform duration-300" id="icon-<%= index %>">expand_less</span>
+                                </button>
+                            </div>
+                            
+                            <div class="divide-y divide-white/5 transition-all duration-300" id="content-<%= index %>">
+                                <% if (season.episodes && season.episodes.length > 0) { %>
+                                    <% season.episodes.forEach(function(ep) { %>
+                                    <div class="p-4 hover:bg-white/5 transition-colors group/episode">
+                                        <div class="flex items-start justify-between gap-4">
+                                            <div class="flex items-start gap-4 flex-1">
+                                                <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-none">
+                                                    <%= ep.episode_number %>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <h5 class="text-white font-medium truncate"><%= ep.name %></h5>
+                                                    <% if (ep.overview) { %>
+                                                    <p class="text-sm text-gray-500 mt-1 line-clamp-2"><%= ep.overview %></p>
+                                                    <% } %>
+                                                    <% if (ep.video_url) { %>
+                                                    <div class="flex items-center gap-2 mt-2 text-xs text-primary/80">
+                                                        <span class="material-symbols-outlined text-[14px]">link</span>
+                                                        <span class="truncate max-w-[300px]"><%= ep.video_url %></span>
+                                                    </div>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                            
+                                            <% if (ep.still_path) { %>
+                                            <div class="w-[120px] aspect-video rounded overflow-hidden bg-black/20 flex-none hidden md:block">
+                                                <img src="https://image.tmdb.org/t/p/w300<%= ep.still_path %>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                            </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="p-8 text-center text-gray-500">
+                                        Chưa có thông tin tập phim
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    <script>
+        function toggleSeason(id) {
+            const content = document.getElementById(`content-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.textContent = 'expand_less';
+            } else {
+                content.classList.add('hidden');
+                icon.textContent = 'expand_more';
+            }
+        }
+    </script>
+</body>
+</html>

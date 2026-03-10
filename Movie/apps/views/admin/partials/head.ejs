@@ -1,0 +1,38 @@
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StreamAdmin - Bảng điều khiển</title>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#E50914", // Cinematic Red
+                    "primary-glow": "#ff4d4d", 
+                    "secondary": "#00E5FF", // Neon Blue
+                    "accent-gold": "#FFD700",
+                    "accent-purple": "#9D00FF",
+                    "background-dark": "#02040a", // Deep Navy/Black
+                    "surface-dark": "#0b0d14", // Slightly lighter for sidebar
+                    "card-dark": "#12141c", // Card background
+                    "border-dark": "rgba(255, 255, 255, 0.08)",
+                },
+                fontFamily: {
+                    "display": ["Spline Sans", "sans-serif"]
+                },
+                backgroundImage: {
+                    'gradient-primary': 'linear-gradient(135deg, #E50914 0%, #B81D24 100%)',
+                    'gradient-glow': 'radial-gradient(circle at center, rgba(229, 9, 20, 0.15) 0%, rgba(0, 0, 0, 0) 70%)',
+                },
+                boxShadow: {
+                    'glow-primary': '0 0 20px rgba(229, 9, 20, 0.3)',
+                    'glow-secondary': '0 0 15px rgba(0, 229, 255, 0.2)',
+                }
+            },
+        },
+    }
+</script>
+<link rel="stylesheet" href="/static/admin/css/admin-style.css">
